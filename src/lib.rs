@@ -21,6 +21,29 @@
 //! 4. Once merged, an automatic job sees the specially-marked commit and
 //!    triggers any actions necessary to push the release. The building
 //!    blocks for this automated part are what `release-utils-rs` provides.
+//!
+//! Example code for an [xtask](https://github.com/matklad/cargo-xtask) job:
+//!
+//! ```
+//! use anyhow::Result;
+//! use release_utils::git::*;
+//! use release_utils::release::*;
+//! use release_utils::Package;
+//!
+//! /// Entry point for the auto-release process. This is intended to be run
+//! /// from a Github Actions workflow, see `.github/workflows/release.yml`.
+//! pub fn auto_release() -> Result<()> {
+//!     let commit_sha = get_commit_sha()?;
+//!     let commit_message_subject = get_commit_message_subject(&commit_sha)?;
+//!
+//!     if !commit_message_subject.starts_with("release:") {
+//!         println!("{commit_sha} does not contain the release trigger");
+//!         return Ok(());
+//!     }
+//!
+//!     release_packages(&[Package::new("foo"), Package::new("bar")])
+//! }
+//! ```
 
 #![warn(missing_docs)]
 
