@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -7,17 +7,11 @@
 # except according to those terms.
 
 [package]
-name = "release-utils"
-version = "0.1.0"
+name = "xtask"
+version = "0.0.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-rust-version = "1.70"
+publish = false
 
 [dependencies]
-anyhow = "1.0.0"
-cargo_metadata = "0.18.0"
-crates-index = "2.3.0"
-ureq = { version = "2.8.0", features = ["http-interop"] }
-
-[workspace]
-members = ["xtask"]
+release-utils = { path = "../" }
