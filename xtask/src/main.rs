@@ -6,9 +6,13 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use anyhow::Result;
+use release_utils::git::*;
+use release_utils::release::*;
+use release_utils::Package;
 use std::env;
 
-fn main() {
+fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
     if args.len() != 2 {
         panic!("expected one argument");
@@ -16,8 +20,22 @@ fn main() {
 
     let action = &args[1];
     if action == "release" {
-        // TODO
+        auto_release()
     } else {
         panic!("invalid action: {action}");
     }
+}
+
+/// Entry point for the auto-release process. This is intended to be run
+/// from a Github Actions workflow.
+fn auto_release() -> Result<()> {
+    let commit_sha = get_commit_sha()?;
+    let commit_message_subject = get_commit_message_subject(&commit_sha)?;
+
+    if !commit_message_subject.starts_with("release:") {
+        println!("{commit_sha} does not contain the release trigger");
+        return Ok(());
+    }
+
+    release_packages(&[Package::new("foo"), Package::new("bar")])
 }
