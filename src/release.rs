@@ -77,14 +77,14 @@ pub fn auto_release_package(
 /// Get the commit to operate on from the `GITHUB_SHA` env var. When running in
 /// Github Actions, this will be set to the SHA of the merge commit that was
 /// pushed to the branch.
-fn get_commit_sha() -> Result<String> {
+pub fn get_commit_sha() -> Result<String> {
     let commit_var_name = "GITHUB_SHA";
     env::var(commit_var_name).context(format!("failed to get env var {commit_var_name}"))
 }
 
 /// Use the `cargo_metadata` crate to get local info about packages in the
 /// workspace.
-fn get_local_package_metadata() -> Result<Metadata> {
+pub fn get_local_package_metadata() -> Result<Metadata> {
     let mut cmd = MetadataCommand::new();
     // Ignore deps, we only need local packages.
     cmd.no_deps();
@@ -94,7 +94,7 @@ fn get_local_package_metadata() -> Result<Metadata> {
 /// Update the local crates.io cache.
 ///
 /// Based on <https://github.com/frewsxcv/rust-crates-index/blob/HEAD/examples/sparse_http_ureq.rs>
-fn update_index(index: &mut SparseIndex, package: &Package) -> Result<()> {
+pub fn update_index(index: &mut SparseIndex, package: &Package) -> Result<()> {
     let crate_name = package.name();
 
     println!("fetching updates for {}", package.name());
