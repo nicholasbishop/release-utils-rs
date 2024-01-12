@@ -31,7 +31,7 @@
 //! use release_utils::Package;
 //!
 //! /// Entry point for the auto-release process. This is intended to be run
-//! /// from a Github Actions workflow, see `.github/workflows/release.yml`.
+//! /// from a Github Actions workflow.
 //! pub fn auto_release() -> Result<()> {
 //!     let commit_sha = get_commit_sha()?;
 //!     let commit_message_subject = get_commit_message_subject(&commit_sha)?;
@@ -43,6 +43,28 @@
 //!
 //!     release_packages(&[Package::new("foo"), Package::new("bar")])
 //! }
+//! ```
+//!
+//! Example Github Actions workflow:
+//!
+//! ```toml
+//! on:
+//!   push:
+//!     branches:
+//!       - main
+//!
+//! permissions:
+//!   contents: write
+//!
+//! jobs:
+//!   release:
+//!     runs-on: ubuntu-latest
+//!     steps:
+//!       - uses: actions/checkout@v4
+//!       - uses: Swatinem/rust-cache@v2
+//!       - run: cargo xtask release
+//!         env:
+//!           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 //! ```
 
 #![warn(missing_docs)]
