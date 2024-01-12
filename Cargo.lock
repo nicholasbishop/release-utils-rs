@@ -620,5 +620,6 @@ dependencies = [
 name = "xtask"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "release-utils",
 ]
