@@ -6,6 +6,18 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use std::env;
+
 fn main() {
-    todo!()
+    let args: Vec<_> = env::args().collect();
+    if args.len() != 2 {
+        panic!("expected one argument");
+    }
+
+    let action = &args[1];
+    if action == "release" {
+        // TODO
+    } else {
+        panic!("invalid action: {action}");
+    }
 }
