@@ -17,8 +17,14 @@ use crates_index::SparseIndex;
 use std::env;
 use std::process::Command;
 
-/// Entry point for the auto-release process. This is intended to be run from a
-/// Github Actions workflow, see `.github/workflows/release.yml`.
+/// Release each package in `packages`, if needed.
+///
+/// For each package, this will create a remote git tag (if it doesn't
+/// already exist) and a crates.io release (if it doesn't already
+/// exist).
+///
+/// Note that when releasing to crates.io, the order of `packages` may
+/// be significant if the packages depend on one another.
 pub fn release_packages(packages: &[Package]) -> Result<()> {
     let commit_sha = get_commit_sha()?;
 
