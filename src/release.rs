@@ -53,14 +53,6 @@ pub fn auto_release_package(
     let local_version = get_local_package_version(package, local_metadata)?;
     println!("local version of {} is {local_version}", package.name());
 
-    // Create the remote git tag if it doesn't exist.
-    let tag = package.get_git_tag_name(&local_version);
-    if does_git_tag_exist(&tag)? {
-        println!("git tag {tag} already exists");
-    } else {
-        make_and_push_git_tag(&tag, commit_sha)?;
-    }
-
     // Create the crates.io release if it doesn't exist.
     if does_crates_io_release_exist(package, &local_version, index)? {
         println!(
@@ -69,6 +61,14 @@ pub fn auto_release_package(
         );
     } else {
         publish_package(package)?;
+    }
+
+    // Create the remote git tag if it doesn't exist.
+    let tag = package.get_git_tag_name(&local_version);
+    if does_git_tag_exist(&tag)? {
+        println!("git tag {tag} already exists");
+    } else {
+        make_and_push_git_tag(&tag, commit_sha)?;
     }
 
     Ok(())
