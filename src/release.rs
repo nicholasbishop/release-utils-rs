@@ -99,11 +99,19 @@ pub fn update_index(index: &mut SparseIndex, package: &Package) -> Result<()> {
 
     println!("fetching updates for {}", package.name());
     let request: ureq::Request = index.make_cache_request(crate_name).unwrap().into();
-    let response = request.call()?;
-
-    index.parse_cache_response(crate_name, response.into(), true)?;
-
-    Ok(())
+    match request.call() {
+        Ok(response) => {
+            index.parse_cache_response(crate_name, response.into(), true)?;
+            Ok(())
+        }
+        // Handle the case where the package does not yet have any
+        // releases.
+        Err(ureq::Error::Status(404, _)) => {
+            println!("packages {} does not exist yet", package.name());
+            Ok(())
+        }
+        Err(err) => Err(err.into()),
+    }
 }
 
 /// Check if a new release of `package` should be published.
