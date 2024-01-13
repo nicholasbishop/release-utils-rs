@@ -91,10 +91,15 @@ pub fn get_local_package_metadata() -> Result<Metadata> {
     Ok(cmd.exec()?)
 }
 
+/// Returned by [`update_index`] to indicate whether a crate exists on
+/// crates.io.
+#[must_use]
+pub struct RemoteCrateExists(pub bool);
+
 /// Update the local crates.io cache.
 ///
 /// Based on <https://github.com/frewsxcv/rust-crates-index/blob/HEAD/examples/sparse_http_ureq.rs>
-pub fn update_index(index: &mut SparseIndex, package: &Package) -> Result<()> {
+pub fn update_index(index: &mut SparseIndex, package: &Package) -> Result<RemoteCrateExists> {
     let crate_name = package.name();
 
     println!("fetching updates for {}", package.name());
@@ -102,13 +107,13 @@ pub fn update_index(index: &mut SparseIndex, package: &Package) -> Result<()> {
     match request.call() {
         Ok(response) => {
             index.parse_cache_response(crate_name, response.into(), true)?;
-            Ok(())
+            Ok(RemoteCrateExists(true))
         }
         // Handle the case where the package does not yet have any
         // releases.
         Err(ureq::Error::Status(404, _)) => {
             println!("packages {} does not exist yet", package.name());
-            Ok(())
+            Ok(RemoteCrateExists(false))
         }
         Err(err) => Err(err.into()),
     }
@@ -147,7 +152,12 @@ pub fn get_remote_package_versions(
     index: &mut SparseIndex,
 ) -> Result<Vec<String>> {
     // The local cache may be out of date, fetch updates from the remote.
-    update_index(index, package)?;
+    let exists = update_index(index, package)?;
+
+    // If the crate hasn't been published yet, return an empty list of versions.
+    if !exists.0 {
+        return Ok(Vec::new());
+    }
 
     let cr = index.crate_from_cache(package.name())?;
 
