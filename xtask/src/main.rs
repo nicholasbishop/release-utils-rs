@@ -37,5 +37,5 @@ fn auto_release() -> Result<()> {
         return Ok(());
     }
 
-    release_packages(&[Package::new("foo"), Package::new("bar")])
+    release_packages(&[Package::new("release-utils")])
 }
