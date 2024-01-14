@@ -8,30 +8,44 @@
 
 use anyhow::{Context, Result};
 use cargo_metadata::MetadataCommand;
+use std::env;
+use std::path::PathBuf;
 
 /// A package in the workspace.
-pub struct Package(String);
+pub struct Package {
+    /// Path of the root workspace directory, or just the directory of
+    /// the package in non-workspace projects.
+    workspace: PathBuf,
+
+    /// Name of the package.
+    name: String,
+}
 
 impl Package {
     /// Create a `Package` with the given name.
     pub fn new(name: &str) -> Self {
-        Self(name.to_string())
+        Self {
+            // TODO
+            workspace: env::current_dir().unwrap(),
+            name: name.to_string(),
+        }
     }
 
     /// Get the package's name.
     pub fn name(&self) -> &str {
-        &self.0
+        &self.name
     }
 
     /// Format a package version as a git tag.
     pub fn get_git_tag_name(&self, local_version: &str) -> String {
-        format!("{}-v{}", self.name(), local_version)
+        format!("{}-v{}", self.name, local_version)
     }
 
     /// Use the `cargo_metadata` crate to get the local version of a package
     /// in the workspace.
     pub fn get_local_version(&self) -> Result<String> {
         let mut cmd = MetadataCommand::new();
+        cmd.manifest_path(self.workspace.join("Cargo.toml"));
         // Ignore deps, we only need local packages.
         cmd.no_deps();
         let local_metadata = cmd.exec()?;
@@ -39,8 +53,8 @@ impl Package {
         let metadata = local_metadata
             .packages
             .iter()
-            .find(|pm| pm.name == self.name())
-            .context(format!("failed to find {} in local metadata", self.name()))?;
+            .find(|pm| pm.name == self.name)
+            .context(format!("failed to find {} in local metadata", self.name))?;
         Ok(metadata.version.to_string())
     }
 }
