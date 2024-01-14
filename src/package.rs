@@ -23,10 +23,23 @@ pub struct Package {
 
 impl Package {
     /// Create a `Package` with the given name.
+    ///
+    /// This uses the current directory as the the workspace path.
     pub fn new(name: &str) -> Self {
+        let workspace = env::current_dir().unwrap();
+        Self::with_workspace(name, workspace)
+    }
+
+    /// Create a `Package` with the given name and workspace.
+    ///
+    /// The workspace directory should be the root of the workspace, or
+    /// just the directory of the package in non-workspace projects.
+    pub fn with_workspace<P>(name: &str, workspace: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
         Self {
-            // TODO
-            workspace: env::current_dir().unwrap(),
+            workspace: workspace.into(),
             name: name.to_string(),
         }
     }
