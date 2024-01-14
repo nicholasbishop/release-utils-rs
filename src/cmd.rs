@@ -40,7 +40,7 @@ impl Display for RunCommandError {
                 write!(f, "failed to launch command \"{cmd}\": {err}")
             }
             Self::NonZeroExit { cmd, status } => {
-                write!(f, "command \"{cmd}\" exited non-zero: {status}")
+                write!(f, "command \"{cmd}\" failed with {status}")
             }
         }
     }
