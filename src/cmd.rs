@@ -11,13 +11,14 @@
 use anyhow::{bail, Result};
 use std::process::Command;
 
-fn print_cmd(cmd: &Command) {
-    println!("Running: {}", format!("{cmd:?}").replace('"', ""));
+/// Format a command in a way suitable for logging.
+pub fn format_cmd(cmd: &Command) -> String {
+    format!("{cmd:?}").replace('"', "")
 }
 
 /// Log a command and run it.
 pub fn run_cmd(mut cmd: Command) -> Result<()> {
-    print_cmd(&cmd);
+    println!("Running: {}", format_cmd(&cmd));
     let status = cmd.status().expect("failed to launch");
     if status.success() {
         Ok(())
@@ -28,7 +29,7 @@ pub fn run_cmd(mut cmd: Command) -> Result<()> {
 
 /// Run a command and get its output.
 pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>> {
-    print_cmd(&cmd);
+    println!("Running: {}", format_cmd(&cmd));
     let output = cmd.output().expect("failed to launch");
     if output.status.success() {
         Ok(output.stdout)
