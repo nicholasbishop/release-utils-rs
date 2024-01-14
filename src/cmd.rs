@@ -27,7 +27,7 @@ pub fn run_cmd(mut cmd: Command) -> Result<()> {
     }
 }
 
-/// Run a command and get its output.
+/// Log a command, run it, and get its output.
 pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>> {
     println!("Running: {}", format_cmd(&cmd));
     let output = cmd.output().expect("failed to launch");
