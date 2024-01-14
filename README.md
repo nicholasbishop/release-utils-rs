@@ -2,6 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/release-utils)](https://crates.io/crates/release-utils) 
 [![Docs.rs](https://docs.rs/release-utils/badge.svg)](https://docs.rs/release-utils)
+[![codecov.io](https://codecov.io/gh/nicholasbishop/release-utils-rs/coverage.svg?branch=main)](https://app.codecov.io/gh/nicholasbishop/release-utils-rs)
 
 This repo contains a Rust crate with utilities for automatically
 releasing Rust code.
