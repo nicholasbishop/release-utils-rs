@@ -173,5 +173,6 @@ pub fn get_remote_package_versions(
 pub fn publish_package(package: &Package) -> Result<()> {
     let mut cmd = Command::new("cargo");
     cmd.args(["publish", "--package", package.name()]);
-    run_cmd(cmd)
+    run_cmd(cmd)?;
+    Ok(())
 }

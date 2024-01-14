@@ -8,8 +8,45 @@
 
 //! Utilities for running child processes.
 
-use anyhow::{bail, Context, Result};
-use std::process::Command;
+use std::fmt::{self, Display, Formatter};
+use std::io;
+use std::process::{Command, ExitStatus};
+
+/// Error returned when running a child process fails.
+#[derive(Debug)]
+pub enum RunCommandError {
+    /// Failed to launch command. May indicate the program is not installed.
+    Launch {
+        /// Stringified form of the command that failed.
+        cmd: String,
+        /// Underlying error.
+        err: io::Error,
+    },
+
+    /// The command exited with a non-zero code, or was terminated by a
+    /// signal.
+    NonZeroExit {
+        /// Stringified form of the command that failed.
+        cmd: String,
+        /// Exit status.
+        status: ExitStatus,
+    },
+}
+
+impl Display for RunCommandError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+        match self {
+            Self::Launch { cmd, err } => {
+                write!(f, "failed to launch command \"{cmd}\": {err}")
+            }
+            Self::NonZeroExit { cmd, status } => {
+                write!(f, "command \"{cmd}\" exited non-zero: {status}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for RunCommandError {}
 
 /// Format a command in a way suitable for logging.
 pub fn format_cmd(cmd: &Command) -> String {
@@ -20,13 +57,20 @@ pub fn format_cmd(cmd: &Command) -> String {
 ///
 /// Returns an error if the process fails to launch or if the exit code
 /// is non-zero.
-pub fn run_cmd(mut cmd: Command) -> Result<()> {
-    println!("Running: {}", format_cmd(&cmd));
-    let status = cmd.status().context("failed to launch process")?;
+pub fn run_cmd(mut cmd: Command) -> Result<(), RunCommandError> {
+    let cmd_str = format_cmd(&cmd);
+    println!("Running: {}", cmd_str);
+    let status = cmd.status().map_err(|err| RunCommandError::Launch {
+        cmd: cmd_str.clone(),
+        err,
+    })?;
     if status.success() {
         Ok(())
     } else {
-        bail!("command failed: {status}");
+        Err(RunCommandError::NonZeroExit {
+            cmd: cmd_str,
+            status,
+        })
     }
 }
 
@@ -34,12 +78,19 @@ pub fn run_cmd(mut cmd: Command) -> Result<()> {
 ///
 /// Returns an error if the process fails to launch or if the exit code
 /// is non-zero.
-pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>> {
-    println!("Running: {}", format_cmd(&cmd));
-    let output = cmd.output().context("failed to launch process")?;
+pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>, RunCommandError> {
+    let cmd_str = format_cmd(&cmd);
+    println!("Running: {}", cmd_str);
+    let output = cmd.output().map_err(|err| RunCommandError::Launch {
+        cmd: cmd_str.clone(),
+        err,
+    })?;
     if output.status.success() {
         Ok(output.stdout)
     } else {
-        bail!("command failed: {}", output.status);
+        Err(RunCommandError::NonZeroExit {
+            cmd: cmd_str,
+            status: output.status,
+        })
     }
 }
