@@ -64,3 +64,16 @@ fn test_get_cmd_stdout() {
         panic!("incorrect error type");
     }
 }
+
+#[test]
+fn test_cmd_error_display() {
+    assert_eq!(
+        run_cmd(Command::new("false")).unwrap_err().to_string(),
+        r#"command "false" failed with exit status: 1"#
+    );
+
+    let msg = run_cmd(Command::new("does-not-exist"))
+        .unwrap_err()
+        .to_string();
+    assert!(msg.starts_with(r#"failed to launch command "does-not-exist": "#));
+}
