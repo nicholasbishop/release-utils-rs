@@ -9,8 +9,7 @@
 //! Utilities for automatically releasing Rust code.
 
 use crate::cmd::run_cmd;
-use crate::git::{does_git_tag_exist, fetch_git_tags, make_and_push_git_tag};
-use crate::package::Package;
+use crate::{Package, Repo};
 use anyhow::{Context, Result};
 use cargo_metadata::{Metadata, MetadataCommand};
 use crates_index::SparseIndex;
@@ -28,13 +27,14 @@ use std::process::Command;
 pub fn release_packages(packages: &[Package]) -> Result<()> {
     let commit_sha = get_commit_sha()?;
 
-    fetch_git_tags()?;
+    let repo = Repo::open()?;
+    repo.fetch_git_tags()?;
 
     let local_metadata = get_local_package_metadata()?;
     let mut index = SparseIndex::new_cargo_default()?;
 
     for package in packages {
-        auto_release_package(package, &local_metadata, &mut index, &commit_sha)?;
+        auto_release_package(&repo, package, &local_metadata, &mut index, &commit_sha)?;
     }
 
     Ok(())
@@ -45,6 +45,7 @@ pub fn release_packages(packages: &[Package]) -> Result<()> {
 /// This publishes to crates.io if the corresponding version does not already
 /// exist there, and also pushes a new git tag if one doesn't exist yet.
 pub fn auto_release_package(
+    repo: &Repo,
     package: &Package,
     local_metadata: &Metadata,
     index: &mut SparseIndex,
@@ -65,10 +66,10 @@ pub fn auto_release_package(
 
     // Create the remote git tag if it doesn't exist.
     let tag = package.get_git_tag_name(&local_version);
-    if does_git_tag_exist(&tag)? {
+    if repo.does_git_tag_exist(&tag)? {
         println!("git tag {tag} already exists");
     } else {
-        make_and_push_git_tag(&tag, commit_sha)?;
+        repo.make_and_push_git_tag(&tag, commit_sha)?;
     }
 
     Ok(())

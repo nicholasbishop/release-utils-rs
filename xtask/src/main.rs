@@ -7,9 +7,8 @@
 // except according to those terms.
 
 use anyhow::Result;
-use release_utils::git::*;
 use release_utils::release::*;
-use release_utils::Package;
+use release_utils::{Package, Repo};
 use std::env;
 
 fn main() -> Result<()> {
@@ -30,7 +29,8 @@ fn main() -> Result<()> {
 /// from a Github Actions workflow.
 fn auto_release() -> Result<()> {
     let commit_sha = get_commit_sha()?;
-    let commit_message_subject = get_commit_message_subject(&commit_sha)?;
+    let repo = Repo::open()?;
+    let commit_message_subject = repo.get_commit_message_subject(&commit_sha)?;
 
     if !commit_message_subject.starts_with("release:") {
         println!("{commit_sha} does not contain the release trigger");
