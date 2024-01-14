@@ -9,7 +9,7 @@
 use anyhow::{Context, Result};
 use cargo_metadata::MetadataCommand;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// A package in the workspace.
 pub struct Package {
@@ -51,6 +51,11 @@ impl Package {
     /// Get the package's name.
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Get the package's root workspace directory.
+    pub fn workspace(&self) -> &Path {
+        &self.workspace
     }
 
     /// Format a package version as a git tag.
