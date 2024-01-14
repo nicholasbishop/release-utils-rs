@@ -1,5 +1,8 @@
 # release-utils-rs
 
+[![Crates.io](https://img.shields.io/crates/v/release-utils)](https://crates.io/crates/release-utils) 
+[![Docs.rs](https://docs.rs/release-utils/badge.svg)](https://docs.rs/release-utils)
+
 This repo contains a Rust crate with utilities for automatically
 releasing Rust code.
 
