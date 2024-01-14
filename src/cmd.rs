@@ -8,7 +8,7 @@
 
 //! Utilities for running child processes.
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use std::process::Command;
 
 /// Format a command in a way suitable for logging.
@@ -19,7 +19,7 @@ pub fn format_cmd(cmd: &Command) -> String {
 /// Log a command and run it.
 pub fn run_cmd(mut cmd: Command) -> Result<()> {
     println!("Running: {}", format_cmd(&cmd));
-    let status = cmd.status().expect("failed to launch");
+    let status = cmd.status().context("failed to launch process")?;
     if status.success() {
         Ok(())
     } else {
@@ -30,7 +30,7 @@ pub fn run_cmd(mut cmd: Command) -> Result<()> {
 /// Log a command, run it, and get its output.
 pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>> {
     println!("Running: {}", format_cmd(&cmd));
-    let output = cmd.output().expect("failed to launch");
+    let output = cmd.output().context("failed to launch process")?;
     if output.status.success() {
         Ok(output.stdout)
     } else {
