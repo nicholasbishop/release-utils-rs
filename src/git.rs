@@ -9,7 +9,7 @@
 //! Utilities for running `git` commands.
 
 use crate::cmd::{get_cmd_stdout, run_cmd};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
@@ -21,21 +21,37 @@ pub struct Repo(PathBuf);
 impl Repo {
     /// Get a `Repo` for the current directory.
     ///
-    /// This just creates a `Repo` object, it does not initialize a git
-    /// repository or check for the existence of one.
+    /// This will fail if the current directory does not contain a
+    /// `.git` subdirectory.
     pub fn open() -> Result<Self> {
-        Ok(Self::open_path(env::current_dir()?))
+        let path = env::current_dir()?;
+        Self::open_path(path)
     }
 
     /// Get a `Repo` for the given path.
     ///
-    /// This just creates a `Repo` object, it does not initialize a git
-    /// repository or check for the existence of one at `path`.
-    pub fn open_path<P>(path: P) -> Self
+    /// This will fail if the `path` does not contain a `.git`
+    /// subdirectory.
+    pub fn open_path<P>(path: P) -> Result<Self>
     where
         P: Into<PathBuf>,
     {
-        Self(path.into())
+        let path = path.into();
+
+        // Check that this is a git repo. This is just to help fail
+        // quickly if the path is wrong; it isn't checking that the git
+        // repo is valid or anything.
+        //
+        // Also, there are various special types of git checkouts so
+        // it's quite possible this check is wrong for special
+        // circumstances, but for a typical CI release process it should
+        // be fine.
+        let git_dir = path.join(".git");
+        if !git_dir.exists() {
+            return Err(anyhow!("{} does not exist", git_dir.display()));
+        }
+
+        Ok(Self(path))
     }
 
     /// Get the repo path.
