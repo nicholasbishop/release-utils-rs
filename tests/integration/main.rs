@@ -7,4 +7,5 @@
 // except according to those terms.
 
 mod cmd;
+mod git;
 mod package;
