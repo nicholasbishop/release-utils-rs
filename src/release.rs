@@ -24,7 +24,7 @@ use std::process::Command;
 /// Note that when releasing to crates.io, the order of `packages` may
 /// be significant if the packages depend on one another.
 pub fn release_packages(packages: &[Package]) -> Result<()> {
-    let commit_sha = get_commit_sha()?;
+    let commit_sha = get_github_sha()?;
 
     let repo = Repo::open()?;
     repo.fetch_git_tags()?;
@@ -72,10 +72,14 @@ pub fn auto_release_package(
     Ok(())
 }
 
-/// Get the commit to operate on from the `GITHUB_SHA` env var. When running in
-/// Github Actions, this will be set to the SHA of the merge commit that was
-/// pushed to the branch.
-pub fn get_commit_sha() -> Result<String> {
+/// Get the commit to operate on from the `GITHUB_SHA` env var. When
+/// running in Github Actions, this will be set to the SHA of the commit
+/// that triggered the workflow.
+///
+/// See Github Actions' [Variables] documentation for details.
+///
+/// [Variables]: https://docs.github.com/en/actions/learn-github-actions/variables
+pub fn get_github_sha() -> Result<String> {
     let commit_var_name = "GITHUB_SHA";
     env::var(commit_var_name).context(format!("failed to get env var {commit_var_name}"))
 }

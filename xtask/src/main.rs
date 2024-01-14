@@ -28,7 +28,7 @@ fn main() -> Result<()> {
 /// Entry point for the auto-release process. This is intended to be run
 /// from a Github Actions workflow.
 fn auto_release() -> Result<()> {
-    let commit_sha = get_commit_sha()?;
+    let commit_sha = get_github_sha()?;
     let repo = Repo::open()?;
     let commit_message_subject = repo.get_commit_message_subject(&commit_sha)?;
 
