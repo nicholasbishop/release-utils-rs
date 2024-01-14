@@ -22,8 +22,23 @@ fn test_format_cmd() {
 #[test]
 fn test_run_cmd() {
     assert!(run_cmd(Command::new("true")).is_ok());
-    assert!(!run_cmd(Command::new("false")).is_ok());
-    assert!(!run_cmd(Command::new("does-not-exist")).is_ok());
+
+    if let RunCommandError::NonZeroExit { cmd, status } =
+        run_cmd(Command::new("false")).unwrap_err()
+    {
+        assert_eq!(cmd, "false");
+        assert!(!status.success());
+    } else {
+        panic!("incorrect error type");
+    }
+
+    if let RunCommandError::Launch { cmd, .. } =
+        run_cmd(Command::new("does-not-exist")).unwrap_err()
+    {
+        assert_eq!(cmd, "does-not-exist");
+    } else {
+        panic!("incorrect error type");
+    }
 }
 
 #[test]
@@ -32,6 +47,20 @@ fn test_get_cmd_stdout() {
     cmd.arg("hello world");
     assert_eq!(get_cmd_stdout(cmd).unwrap(), b"hello world\n");
 
-    assert!(!get_cmd_stdout(Command::new("false")).is_ok());
-    assert!(!get_cmd_stdout(Command::new("does-not-exist")).is_ok());
+    if let RunCommandError::NonZeroExit { cmd, status } =
+        get_cmd_stdout(Command::new("false")).unwrap_err()
+    {
+        assert_eq!(cmd, "false");
+        assert!(!status.success());
+    } else {
+        panic!("incorrect error type");
+    }
+
+    if let RunCommandError::Launch { cmd, .. } =
+        get_cmd_stdout(Command::new("does-not-exist")).unwrap_err()
+    {
+        assert_eq!(cmd, "does-not-exist");
+    } else {
+        panic!("incorrect error type");
+    }
 }
