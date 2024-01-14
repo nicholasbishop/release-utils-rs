@@ -17,6 +17,9 @@ pub fn format_cmd(cmd: &Command) -> String {
 }
 
 /// Log a command and run it.
+///
+/// Returns an error if the process fails to launch or if the exit code
+/// is non-zero.
 pub fn run_cmd(mut cmd: Command) -> Result<()> {
     println!("Running: {}", format_cmd(&cmd));
     let status = cmd.status().context("failed to launch process")?;
@@ -28,6 +31,9 @@ pub fn run_cmd(mut cmd: Command) -> Result<()> {
 }
 
 /// Log a command, run it, and get its output.
+///
+/// Returns an error if the process fails to launch or if the exit code
+/// is non-zero.
 pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>> {
     println!("Running: {}", format_cmd(&cmd));
     let output = cmd.output().context("failed to launch process")?;
