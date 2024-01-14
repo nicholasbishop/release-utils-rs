@@ -88,7 +88,8 @@ impl Repo {
     /// Fetch git tags from the remote.
     pub fn fetch_git_tags(&self) -> Result<()> {
         let cmd = self.get_git_command(["fetch", "--tags"]);
-        run_cmd(cmd)
+        run_cmd(cmd)?;
+        Ok(())
     }
 
     /// Check if a git tag exists locally.
@@ -111,6 +112,8 @@ impl Repo {
 
         // Push it.
         let cmd = self.get_git_command(["push", "--tags"]);
-        run_cmd(cmd)
+        run_cmd(cmd)?;
+
+        Ok(())
     }
 }
