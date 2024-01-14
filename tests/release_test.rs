@@ -1,4 +1,5 @@
 use release_utils::cmd::*;
+use release_utils::Package;
 use std::process::Command;
 
 #[test]
@@ -26,4 +27,11 @@ fn test_get_cmd_stdout() {
 
     assert!(!get_cmd_stdout(Command::new("false")).is_ok());
     assert!(!get_cmd_stdout(Command::new("does-not-exist")).is_ok());
+}
+
+#[test]
+fn test_package() {
+    let pkg = Package::new("foo");
+    assert_eq!(pkg.name(), "foo");
+    assert_eq!(pkg.get_git_tag_name("1.2.3"), "foo-v1.2.3");
 }
