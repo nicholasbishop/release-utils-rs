@@ -11,7 +11,6 @@
 use crate::cmd::run_cmd;
 use crate::{Package, Repo};
 use anyhow::{Context, Result};
-use cargo_metadata::{Metadata, MetadataCommand};
 use crates_index::SparseIndex;
 use std::env;
 use std::process::Command;
@@ -30,11 +29,10 @@ pub fn release_packages(packages: &[Package]) -> Result<()> {
     let repo = Repo::open()?;
     repo.fetch_git_tags()?;
 
-    let local_metadata = get_local_package_metadata()?;
     let mut index = SparseIndex::new_cargo_default()?;
 
     for package in packages {
-        auto_release_package(&repo, package, &local_metadata, &mut index, &commit_sha)?;
+        auto_release_package(&repo, package, &mut index, &commit_sha)?;
     }
 
     Ok(())
@@ -47,11 +45,10 @@ pub fn release_packages(packages: &[Package]) -> Result<()> {
 pub fn auto_release_package(
     repo: &Repo,
     package: &Package,
-    local_metadata: &Metadata,
     index: &mut SparseIndex,
     commit_sha: &str,
 ) -> Result<()> {
-    let local_version = get_local_package_version(package, local_metadata)?;
+    let local_version = package.get_local_version()?;
     println!("local version of {} is {local_version}", package.name());
 
     // Create the crates.io release if it doesn't exist.
@@ -81,15 +78,6 @@ pub fn auto_release_package(
 pub fn get_commit_sha() -> Result<String> {
     let commit_var_name = "GITHUB_SHA";
     env::var(commit_var_name).context(format!("failed to get env var {commit_var_name}"))
-}
-
-/// Use the `cargo_metadata` crate to get local info about packages in the
-/// workspace.
-pub fn get_local_package_metadata() -> Result<Metadata> {
-    let mut cmd = MetadataCommand::new();
-    // Ignore deps, we only need local packages.
-    cmd.no_deps();
-    Ok(cmd.exec()?)
 }
 
 /// Returned by [`update_index`] to indicate whether a crate exists on
@@ -132,19 +120,6 @@ pub fn does_crates_io_release_exist(
     }
 
     Ok(false)
-}
-
-/// Get the local version of `package`.
-pub fn get_local_package_version(package: &Package, local_metadata: &Metadata) -> Result<String> {
-    let metadata = local_metadata
-        .packages
-        .iter()
-        .find(|pm| pm.name == package.name())
-        .context(format!(
-            "failed to find {} in local metadata",
-            package.name()
-        ))?;
-    Ok(metadata.version.to_string())
 }
 
 /// Get all remote versions of `package`.
