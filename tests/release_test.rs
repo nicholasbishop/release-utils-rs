@@ -15,6 +15,7 @@ fn test_format_cmd() {
 fn test_run_cmd() {
     assert!(run_cmd(Command::new("true")).is_ok());
     assert!(!run_cmd(Command::new("false")).is_ok());
+    assert!(!run_cmd(Command::new("does-not-exist")).is_ok());
 }
 
 #[test]
@@ -22,5 +23,7 @@ fn test_get_cmd_stdout() {
     let mut cmd = Command::new("echo");
     cmd.arg("hello world");
     assert_eq!(get_cmd_stdout(cmd).unwrap(), b"hello world\n");
+
     assert!(!get_cmd_stdout(Command::new("false")).is_ok());
+    assert!(!get_cmd_stdout(Command::new("does-not-exist")).is_ok());
 }
