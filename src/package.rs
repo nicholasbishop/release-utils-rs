@@ -25,7 +25,10 @@ impl Package {
     /// Create a `Package` with the given name.
     ///
     /// This uses the current directory as the the workspace path.
-    pub fn new(name: &str) -> Self {
+    pub fn new<S>(name: S) -> Self
+    where
+        S: Into<String>,
+    {
         let workspace = env::current_dir().unwrap();
         Self::with_workspace(name, workspace)
     }
@@ -34,13 +37,14 @@ impl Package {
     ///
     /// The workspace directory should be the root of the workspace, or
     /// just the directory of the package in non-workspace projects.
-    pub fn with_workspace<P>(name: &str, workspace: P) -> Self
+    pub fn with_workspace<S, P>(name: S, workspace: P) -> Self
     where
+        S: Into<String>,
         P: Into<PathBuf>,
     {
         Self {
             workspace: workspace.into(),
-            name: name.to_string(),
+            name: name.into(),
         }
     }
 
