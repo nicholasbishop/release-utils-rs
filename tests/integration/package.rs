@@ -7,10 +7,12 @@
 // except according to those terms.
 
 use release_utils::Package;
+use std::env;
 
 #[test]
 fn test_package() {
     let pkg = Package::new("foo");
     assert_eq!(pkg.name(), "foo");
+    assert_eq!(pkg.workspace(), env::current_dir().unwrap());
     assert_eq!(pkg.get_git_tag_name("1.2.3"), "foo-v1.2.3");
 }
