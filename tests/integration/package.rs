@@ -6,5 +6,11 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-mod cmd;
-mod package;
+use release_utils::Package;
+
+#[test]
+fn test_package() {
+    let pkg = Package::new("foo");
+    assert_eq!(pkg.name(), "foo");
+    assert_eq!(pkg.get_git_tag_name("1.2.3"), "foo-v1.2.3");
+}
