@@ -15,4 +15,4 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.79"
-release-utils = { path = "../" }
+release-utils = { path = "../release-utils" }
