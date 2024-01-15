@@ -24,7 +24,7 @@ crates-index = "2.3.0"
 ureq = { version = "2.8.0", features = ["http-interop"] }
 
 [workspace]
-members = ["xtask"]
+members = ["auto-release", "xtask"]
 
 [dev-dependencies]
 tempfile = "3.9.0"
