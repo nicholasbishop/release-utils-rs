@@ -6,25 +6,6 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-[package]
-name = "release-utils"
-version = "0.3.0"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-rust-version = "1.70"
-categories = ["development-tools"]
-description = "Utilities for automatically releasing Rust code"
-keywords = ["release", "github", "automation"]
-repository = "https://github.com/nicholasbishop/release-utils-rs"
-
-[dependencies]
-anyhow = "1.0.0"
-cargo_metadata = "0.18.0"
-crates-index = "2.3.0"
-ureq = { version = "2.8.0", features = ["http-interop"] }
-
 [workspace]
-members = ["auto-release", "xtask"]
-
-[dev-dependencies]
-tempfile = "3.9.0"
+members = ["auto-release", "release-utils", "xtask"]
+resolver = "2"
