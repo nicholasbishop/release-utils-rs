@@ -22,7 +22,7 @@
 //!    triggers any actions necessary to push the release. The building
 //!    blocks for this automated part are what `release-utils-rs` provides.
 //!
-//! Example code for an [xtask](https://github.com/matklad/cargo-xtask) job:
+//! # Example code for a release job
 //!
 //! ```
 //! use anyhow::Result;
@@ -45,7 +45,7 @@
 //! }
 //! ```
 //!
-//! Example Github Actions workflow:
+//! # Example Github Actions workflow
 //!
 //! ```toml
 //! on:
@@ -66,6 +66,20 @@
 //!         env:
 //!           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 //! ```
+//!
+//! # Cargo registry token
+//!
+//! The above Github Actions workflow requires a secret token. Generate
+//! the token in your crates.io [Account Settings]. The token scopes
+//! must include `publish-update`. If the crate has never been published
+//! before, `publish-new` is also required.
+//!
+//! To make the token available to the Github Actions workflow:
+//! 1. Go to your repository's settings
+//! 2. Click to `Secrets and variables` in the sidebar, then click `Actions`
+//! 3. Under `Repository secrets`, click `New repository secret`.
+//!
+//! [Account Settings]: https://crates.io/settings/tokens
 
 #![warn(missing_docs)]
 
