@@ -8,14 +8,15 @@
 
 [package]
 name = "release-utils"
-version = "0.3.0"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-rust-version = "1.70"
 categories = ["development-tools"]
 description = "Utilities for automatically releasing Rust code"
 keywords = ["release", "github", "automation"]
-repository = "https://github.com/nicholasbishop/release-utils-rs"
+
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
 
 [dependencies]
 anyhow = "1.0.0"

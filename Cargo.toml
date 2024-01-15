@@ -9,3 +9,10 @@
 [workspace]
 members = ["auto-release", "release-utils", "xtask"]
 resolver = "2"
+
+[workspace.package]
+version = "0.3.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+rust-version = "1.70"
+repository = "https://github.com/nicholasbishop/release-utils-rs"
