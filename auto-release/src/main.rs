@@ -6,6 +6,23 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use clap::Parser;
+
+#[derive(Parser)]
+struct Cli {
+    #[arg(short, long, required = true)]
+    package: Vec<String>,
+
+    #[arg(long)]
+    execute: bool,
+}
+
 fn main() {
-    todo!();
+    let cli = Cli::parse();
+
+    if cli.execute {
+        todo!();
+    } else {
+        println!("--execute not passed; stopping");
+    }
 }
