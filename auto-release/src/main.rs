@@ -8,8 +8,8 @@
 
 use anyhow::Result;
 use clap::{Parser, ValueEnum};
-use release_utils::release::get_github_sha;
-use release_utils::Repo;
+use release_utils::release::{get_github_sha, release_packages};
+use release_utils::{Package, Repo};
 use std::process;
 
 #[derive(ValueEnum, Clone, Copy)]
@@ -65,7 +65,9 @@ fn execute(cli: Cli) -> Result<()> {
         }
     }
 
-    todo!()
+    let packages: Vec<_> = cli.package.iter().map(Package::new).collect();
+
+    release_packages(&packages)
 }
 
 fn main() -> Result<()> {
