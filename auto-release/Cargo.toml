@@ -19,3 +19,6 @@ rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
+anyhow = "1.0.0"
+clap = { version = "4.4.0", features = ["derive"] }
+release-utils = { version = "0.3.0", path = "../release-utils" }
