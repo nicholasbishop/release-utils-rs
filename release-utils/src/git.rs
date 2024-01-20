@@ -73,6 +73,19 @@ impl Repo {
     }
 
     /// Get the subject of the commit message for the given commit.
+    pub fn get_commit_message_body(&self, commit_sha: &str) -> Result<String> {
+        let cmd = self.get_git_command([
+            "log",
+            "-1",
+            // Only get the body of the commit message.
+            "--format=format:%b",
+            commit_sha,
+        ]);
+        let output = get_cmd_stdout(cmd)?;
+        String::from_utf8(output).context("commit message is not utf-8")
+    }
+
+    /// Get the subject of the commit message for the given commit.
     pub fn get_commit_message_subject(&self, commit_sha: &str) -> Result<String> {
         let cmd = self.get_git_command([
             "log",

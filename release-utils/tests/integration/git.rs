@@ -27,7 +27,7 @@ fn test_repo_open() {
 }
 
 #[test]
-fn test_get_commit_message_subject() {
+fn test_get_commit_message() {
     let tmp_dir = TempDir::new().unwrap();
 
     // Create a temporary repo.
@@ -65,5 +65,9 @@ fn test_get_commit_message_subject() {
     assert_eq!(
         repo.get_commit_message_subject("HEAD").unwrap(),
         "hello world!"
+    );
+    assert_eq!(
+        repo.get_commit_message_body("HEAD").unwrap(),
+        "Here's the body.\n"
     );
 }
