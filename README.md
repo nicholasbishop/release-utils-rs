@@ -1,36 +1,23 @@
 # release-utils-rs
 
-[![Crates.io](https://img.shields.io/crates/v/release-utils)](https://crates.io/crates/release-utils) 
-[![Docs.rs](https://docs.rs/release-utils/badge.svg)](https://docs.rs/release-utils)
 [![codecov.io](https://codecov.io/gh/nicholasbishop/release-utils-rs/coverage.svg?branch=main)](https://app.codecov.io/gh/nicholasbishop/release-utils-rs)
 
-This repo contains a Rust crate with utilities for automatically
-releasing Rust code.
+This repo contains tools for automatically releasing Rust code. There
+are two Rust packages:
+* [`auto-release`] - A command-line utility for releasing Rust projects
+  via Github Actions.
+  * [![Crates.io](https://img.shields.io/crates/v/auto-release)](https://crates.io/crates/auto-release)
+* [`release-utils`] - A library providing the building blocks for
+  `auto-release`, useful if you need to customize your release beyond
+  what `auto-release` provides.
+  * [![Crates.io](https://img.shields.io/crates/v/release-utils)](https://crates.io/crates/release-utils) [![Docs.rs](https://docs.rs/release-utils/badge.svg)](https://docs.rs/release-utils)
 
-The intended usage is something like this (but not necessarily exactly
-this):
-
-1. All code changes needed for a release are made by a developer in a
-   regular git commit. The commit includes bumping the version in
-   `Cargo.toml`, and any updates to `Cargo.lock`, changelog files, etc.
-2. The commit message is prefixed with `release:` to mark the commit as
-   a release trigger.
-3. The commit is reviewed and merged through the normal pull request
-   process.
-4. Once merged, an automatic job sees the specially-marked commit and
-   triggers any actions necessary to push the release. The building
-   blocks for this automated part are what `release-utils-rs` provides.
-   
 ## Comparison with other projects
 
-This is primarily a library crate; the intention is that projects can
-incorporate it into an [xtask]-style package that includes a release
-command, triggered by a [GitHub Action] or some similar job runner.
-
-Unlike [cargo-release] and [release-plz], this crate does not modify any
-code in the repo. It does not bump versions, update changelogs, or make
-any other change to files in the repo. It only handles releasing to
-hosts such as crates.io and github.
+Unlike [cargo-release] and [release-plz], `release-utils-rs` does not
+modify any code in the repo. It does not bump versions, update
+changelogs, or make any other change to files in the repo. It only
+handles releasing to hosts such as crates.io and github.
 
 [Github Action]: https://docs.github.com/en/actions
 [cargo-release]: https://github.com/crate-ci/cargo-release
