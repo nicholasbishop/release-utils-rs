@@ -1,6 +1,6 @@
 # auto-release
 
-[![Crates.io](https://img.shields.io/crates/v/auto-release)](https://crates.io/crates/auto-release) 
+[![Crates.io](https://img.shields.io/crates/v/auto-release)](https://crates.io/crates/auto-release)
 
 This package provides an executable that can be run from Github Actions
 to release code to crates.io and pushing a git tag.

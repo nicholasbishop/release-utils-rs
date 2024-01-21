@@ -1,6 +1,6 @@
 # release-utils
 
-[![Crates.io](https://img.shields.io/crates/v/release-utils)](https://crates.io/crates/release-utils) 
+[![Crates.io](https://img.shields.io/crates/v/release-utils)](https://crates.io/crates/release-utils)
 [![Docs.rs](https://docs.rs/release-utils/badge.svg)](https://docs.rs/release-utils)
 
 This package contains a library with utilities for automatically
