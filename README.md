@@ -11,6 +11,9 @@ are two Rust packages:
   `auto-release`, useful if you need to customize your release beyond
   what `auto-release` provides.
   * [![Crates.io](https://img.shields.io/crates/v/release-utils)](https://crates.io/crates/release-utils) [![Docs.rs](https://docs.rs/release-utils/badge.svg)](https://docs.rs/release-utils)
+  
+[`auto-release`]: ./auto-release
+[`release-utils`]: ./release-utils
 
 ## Comparison with other projects
 
