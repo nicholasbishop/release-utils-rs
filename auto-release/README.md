@@ -9,7 +9,7 @@ All code changes needed for a release are made by a developer in a
 regular git commit. The commit includes bumping the version in
 `Cargo.toml`, and any updates to `Cargo.lock`, changelog files, etc. The
 commit is reviewed and merged through the normal pull request
-process. Once merged, a Github Actions ojb runs `auto-release` to
+process. Once merged, a Github Actions job runs `auto-release` to
 actually push the release.
 
 Releasing this way has a couple advantages over local release flows:
@@ -36,7 +36,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
       - run: cargo install auto-release
       - run: auto-release -p <package> --execute
         env:
