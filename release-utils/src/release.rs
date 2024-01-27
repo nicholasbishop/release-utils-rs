@@ -86,6 +86,7 @@ pub fn get_github_sha() -> Result<String> {
 
 /// Returned by [`update_index`] to indicate whether a crate exists on
 /// crates.io.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[must_use]
 pub struct RemoteCrateExists(pub bool);
 
