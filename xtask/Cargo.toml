@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -6,13 +6,13 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-[workspace]
-members = ["auto-release", "release-utils", "xtask"]
-resolver = "2"
-
-[workspace.package]
-version = "0.4.1"
+[package]
+name = "xtask"
+version = "0.0.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-rust-version = "1.70"
-repository = "https://github.com/nicholasbishop/release-utils-rs"
+publish = false
+
+[dependencies]
+anyhow = "1.0.79"
+release-utils = { path = "../release-utils" }
