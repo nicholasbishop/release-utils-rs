@@ -7,9 +7,13 @@
 // except according to those terms.
 
 use anyhow::Result;
+use release_utils::cmd::run_cmd;
+use release_utils::github::{self, Gh};
 use release_utils::release::*;
 use release_utils::{Package, Repo};
 use std::env;
+use std::path::PathBuf;
+use std::process::Command;
 
 fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
@@ -37,5 +41,47 @@ fn auto_release() -> Result<()> {
         return Ok(());
     }
 
-    release_packages(&[Package::new("release-utils")])
+    let lib_pkg = Package::new("release-utils");
+    let bin_pkg = Package::new("auto-release");
+    release_packages(&[lib_pkg, bin_pkg.clone()])?;
+
+    create_github_release(&bin_pkg)
+}
+
+/// Create a new Github release for the package, if it does not already
+/// exist. This release includes a prebuilt auto-release executable for
+/// convenience.
+fn create_github_release(pkg: &Package) -> Result<()> {
+    let version = pkg.get_local_version()?;
+    let tag = pkg.get_git_tag_name(&version);
+
+    let gh = Gh::new();
+    if gh.does_release_exist(&tag)? {
+        println!("github release {tag} already exists");
+        return Ok(());
+    }
+
+    // This executable is intended to run in the default Github Actions
+    // Ubuntu runner, i.e. the same environment we're building in, so
+    // don't bother with anything clever like musl.
+    let mut cmd = Command::new("cargo");
+    cmd.args(["build", "--package", "auto-release", "--release"]);
+    run_cmd(cmd)?;
+    let exe_path = PathBuf::from("target/release/auto-release");
+
+    // Strip the executable to reduce size. In future Rust releases this
+    // won't be needed, see
+    // https://kobzol.github.io/rust/cargo/2024/01/23/making-rust-binaries-smaller-by-default.html
+    let mut cmd = Command::new("strip");
+    cmd.arg(&exe_path);
+    run_cmd(cmd)?;
+
+    gh.create_release(github::CreateRelease {
+        tag: tag.clone(),
+        title: Some(tag),
+        notes: None,
+        files: vec![exe_path],
+    })?;
+
+    Ok(())
 }
