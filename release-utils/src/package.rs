@@ -12,6 +12,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 /// A package in the workspace.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Package {
     /// Path of the root workspace directory, or just the directory of
     /// the package in non-workspace projects.
