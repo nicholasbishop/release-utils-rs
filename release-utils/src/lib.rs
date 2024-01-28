@@ -87,6 +87,7 @@ mod git;
 mod package;
 
 pub mod cmd;
+pub mod github;
 pub mod release;
 
 pub use git::Repo;

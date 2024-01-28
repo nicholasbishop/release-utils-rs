@@ -8,4 +8,5 @@
 
 mod cmd;
 mod git;
+mod github;
 mod package;
