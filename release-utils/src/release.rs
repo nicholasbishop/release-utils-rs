@@ -97,7 +97,7 @@ pub fn update_index(index: &mut SparseIndex, package: &Package) -> Result<Remote
     let crate_name = package.name();
 
     println!("fetching updates for {}", package.name());
-    let request: ureq::Request = index.make_cache_request(crate_name).unwrap().into();
+    let request: ureq::Request = index.make_cache_request(crate_name)?.into();
     match request.call() {
         Ok(response) => {
             index.parse_cache_response(crate_name, response.into(), true)?;
