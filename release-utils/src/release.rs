@@ -9,9 +9,8 @@
 //! Utilities for automatically releasing Rust code.
 
 use crate::cmd::{run_cmd, RunCommandError};
-use crate::{get_github_sha, Package, Repo};
+use crate::{get_github_sha, CrateRegistry, Package, Repo};
 use anyhow::Result;
-use crates_index::SparseIndex;
 use std::process::Command;
 
 /// Release each package in `packages`, if needed.
@@ -28,10 +27,8 @@ pub fn release_packages(packages: &[Package]) -> Result<()> {
     let repo = Repo::open()?;
     repo.fetch_git_tags()?;
 
-    let mut index = SparseIndex::new_cargo_default()?;
-
     for package in packages {
-        auto_release_package(&repo, package, &mut index, &commit_sha)?;
+        auto_release_package(&repo, package, &commit_sha)?;
     }
 
     Ok(())
@@ -44,14 +41,13 @@ pub fn release_packages(packages: &[Package]) -> Result<()> {
 pub fn auto_release_package(
     repo: &Repo,
     package: &Package,
-    index: &mut SparseIndex,
     commit_sha: &str,
 ) -> Result<()> {
     let local_version = package.get_local_version()?;
     println!("local version of {} is {local_version}", package.name());
 
     // Create the crates.io release if it doesn't exist.
-    if does_crates_io_release_exist(package, &local_version, index)? {
+    if does_crates_io_release_exist(package, &local_version)? {
         println!(
             "{}-{local_version} has already been published",
             package.name()
@@ -71,72 +67,19 @@ pub fn auto_release_package(
     Ok(())
 }
 
-/// Returned by [`update_index`] to indicate whether a crate exists on
-/// crates.io.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[must_use]
-pub struct RemoteCrateExists(pub bool);
-
-/// Update the local crates.io cache.
-///
-/// Based on <https://github.com/frewsxcv/rust-crates-index/blob/HEAD/examples/sparse_http_ureq.rs>
-pub fn update_index(
-    index: &mut SparseIndex,
-    package: &Package,
-) -> Result<RemoteCrateExists> {
-    let crate_name = package.name();
-
-    println!("fetching updates for {}", package.name());
-    let request: ureq::Request = index.make_cache_request(crate_name)?.into();
-    match request.call() {
-        Ok(response) => {
-            index.parse_cache_response(crate_name, response.into(), true)?;
-            Ok(RemoteCrateExists(true))
-        }
-        // Handle the case where the package does not yet have any
-        // releases.
-        Err(ureq::Error::Status(404, _)) => {
-            println!("packages {} does not exist yet", package.name());
-            Ok(RemoteCrateExists(false))
-        }
-        Err(err) => Err(err.into()),
-    }
-}
-
 /// Check if a new release of `package` should be published.
 pub fn does_crates_io_release_exist(
     package: &Package,
     local_version: &str,
-    index: &mut SparseIndex,
 ) -> Result<bool> {
-    let remote_versions = get_remote_package_versions(package, index)?;
+    let cargo = CrateRegistry::new();
+    let remote_versions = cargo.get_crate_versions(package.name())?;
+
     if remote_versions.contains(&local_version.to_string()) {
         return Ok(true);
     }
 
     Ok(false)
-}
-
-/// Get all remote versions of `package`.
-pub fn get_remote_package_versions(
-    package: &Package,
-    index: &mut SparseIndex,
-) -> Result<Vec<String>> {
-    // The local cache may be out of date, fetch updates from the remote.
-    let exists = update_index(index, package)?;
-
-    // If the crate hasn't been published yet, return an empty list of versions.
-    if !exists.0 {
-        return Ok(Vec::new());
-    }
-
-    let cr = index.crate_from_cache(package.name())?;
-
-    Ok(cr
-        .versions()
-        .iter()
-        .map(|v| v.version().to_string())
-        .collect())
 }
 
 /// Publish `package` to crates.io.
