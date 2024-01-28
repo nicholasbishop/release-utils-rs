@@ -7,6 +7,7 @@
 // except according to those terms.
 
 mod cmd;
+mod crate_registry;
 mod git;
 mod github;
 mod package;
