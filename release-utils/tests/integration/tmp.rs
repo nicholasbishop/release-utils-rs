@@ -6,8 +6,20 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-mod cmd;
-mod git;
-mod github;
-mod package;
-mod tmp;
+use release_utils::TempDir;
+use std::fs;
+
+#[test]
+fn test_tmp_dir() {
+    let path;
+
+    {
+        let tmp_dir = TempDir::new().unwrap();
+        path = tmp_dir.path().to_path_buf();
+        assert!(path.exists());
+
+        fs::write(path.join("file.txt"), "hello\n").unwrap();
+    }
+
+    assert!(!path.exists());
+}

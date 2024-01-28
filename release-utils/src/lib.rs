@@ -88,6 +88,7 @@
 mod env;
 mod git;
 mod package;
+mod tmp;
 
 pub mod cmd;
 pub mod github;
@@ -96,3 +97,4 @@ pub mod release;
 pub use env::{get_github_sha, VarError};
 pub use git::{Repo, RepoOpenError};
 pub use package::{GetLocalVersionError, Package};
+pub use tmp::TempDir;
