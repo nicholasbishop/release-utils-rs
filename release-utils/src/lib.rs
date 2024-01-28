@@ -85,6 +85,7 @@
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
+mod cargo;
 mod env;
 mod git;
 mod package;
@@ -94,6 +95,7 @@ pub mod cmd;
 pub mod github;
 pub mod release;
 
+pub use cargo::{CrateRegistry, GetCrateVersionsError};
 pub use env::{get_github_sha, VarError};
 pub use git::{Repo, RepoOpenError};
 pub use package::{GetLocalVersionError, Package};

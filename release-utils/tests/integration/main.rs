@@ -6,6 +6,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+mod cargo;
 mod cmd;
 mod git;
 mod github;
