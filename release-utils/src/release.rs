@@ -9,9 +9,11 @@
 //! Utilities for automatically releasing Rust code.
 
 use crate::cmd::{run_cmd, RunCommandError};
-use crate::{get_github_sha, GetLocalVersionError, Package, Repo, VarError};
+use crate::{
+    get_github_sha, CrateRegistry, GetCrateVersionsError, GetLocalVersionError,
+    Package, Repo, VarError,
+};
 use anyhow::Result;
-use crates_index::SparseIndex;
 use std::fmt::{self, Display, Formatter};
 use std::process::Command;
 
@@ -23,9 +25,6 @@ pub enum ReleasePackagesError {
 
     /// A git error occurred.
     Git(Box<dyn std::error::Error + Send + Sync + 'static>),
-
-    /// A crate registry error occurred.
-    CrateRegistry(crates_index::Error),
 
     /// Failed to release a package.
     Package {
@@ -41,7 +40,6 @@ impl Display for ReleasePackagesError {
         match self {
             Self::Env(_) => write!(f, "environment error"),
             Self::Git(_) => write!(f, "git error"),
-            Self::CrateRegistry(_) => write!(f, "crate registry error"),
             Self::Package { package, .. } => {
                 write!(f, "failed to release package {package}")
             }
@@ -54,7 +52,6 @@ impl std::error::Error for ReleasePackagesError {
         match self {
             Self::Env(err) => Some(err),
             Self::Git(err) => Some(&**err),
-            Self::CrateRegistry(err) => Some(err),
             Self::Package { cause, .. } => Some(cause),
         }
     }
@@ -78,16 +75,13 @@ pub fn release_packages(
     repo.fetch_git_tags()
         .map_err(|err| ReleasePackagesError::Git(Box::new(err)))?;
 
-    let mut index = SparseIndex::new_cargo_default()
-        .map_err(ReleasePackagesError::CrateRegistry)?;
-
     for package in packages {
-        auto_release_package(&repo, package, &mut index, &commit_sha).map_err(
-            |err| ReleasePackagesError::Package {
+        auto_release_package(&repo, package, &commit_sha).map_err(|err| {
+            ReleasePackagesError::Package {
                 package: package.name().to_string(),
                 cause: err,
-            },
-        )?;
+            }
+        })?;
     }
 
     Ok(())
@@ -100,7 +94,7 @@ pub enum ReleasePackageError {
     LocalVersion(GetLocalVersionError),
 
     /// Failed to get the published versions of the crate.
-    RemoteVersions(anyhow::Error),
+    RemoteVersions(GetCrateVersionsError),
 
     /// Failed to publish the crate.
     Publish(RunCommandError),
@@ -128,8 +122,7 @@ impl std::error::Error for ReleasePackageError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::LocalVersion(err) => Some(err),
-            // TODO: remove anyhow.
-            Self::RemoteVersions(_) => None,
+            Self::RemoteVersions(err) => Some(err),
             Self::Publish(err) => Some(err),
             Self::Git(err) => Some(err),
         }
@@ -143,7 +136,6 @@ impl std::error::Error for ReleasePackageError {
 pub fn auto_release_package(
     repo: &Repo,
     package: &Package,
-    index: &mut SparseIndex,
     commit_sha: &str,
 ) -> Result<(), ReleasePackageError> {
     let local_version = package
@@ -152,7 +144,7 @@ pub fn auto_release_package(
     println!("local version of {} is {local_version}", package.name());
 
     // Create the crates.io release if it doesn't exist.
-    if does_crates_io_release_exist(package, &local_version, index)
+    if does_crates_io_release_exist(package, &local_version)
         .map_err(ReleasePackageError::RemoteVersions)?
     {
         println!(
@@ -178,72 +170,19 @@ pub fn auto_release_package(
     Ok(())
 }
 
-/// Returned by [`update_index`] to indicate whether a crate exists on
-/// crates.io.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[must_use]
-pub struct RemoteCrateExists(pub bool);
-
-/// Update the local crates.io cache.
-///
-/// Based on <https://github.com/frewsxcv/rust-crates-index/blob/HEAD/examples/sparse_http_ureq.rs>
-pub fn update_index(
-    index: &mut SparseIndex,
-    package: &Package,
-) -> Result<RemoteCrateExists> {
-    let crate_name = package.name();
-
-    println!("fetching updates for {}", package.name());
-    let request: ureq::Request = index.make_cache_request(crate_name)?.into();
-    match request.call() {
-        Ok(response) => {
-            index.parse_cache_response(crate_name, response.into(), true)?;
-            Ok(RemoteCrateExists(true))
-        }
-        // Handle the case where the package does not yet have any
-        // releases.
-        Err(ureq::Error::Status(404, _)) => {
-            println!("packages {} does not exist yet", package.name());
-            Ok(RemoteCrateExists(false))
-        }
-        Err(err) => Err(err.into()),
-    }
-}
-
 /// Check if a new release of `package` should be published.
 pub fn does_crates_io_release_exist(
     package: &Package,
     local_version: &str,
-    index: &mut SparseIndex,
-) -> Result<bool> {
-    let remote_versions = get_remote_package_versions(package, index)?;
+) -> Result<bool, GetCrateVersionsError> {
+    let cargo = CrateRegistry::new();
+    let remote_versions = cargo.get_crate_versions(package.name())?;
+
     if remote_versions.contains(&local_version.to_string()) {
         return Ok(true);
     }
 
     Ok(false)
-}
-
-/// Get all remote versions of `package`.
-pub fn get_remote_package_versions(
-    package: &Package,
-    index: &mut SparseIndex,
-) -> Result<Vec<String>> {
-    // The local cache may be out of date, fetch updates from the remote.
-    let exists = update_index(index, package)?;
-
-    // If the crate hasn't been published yet, return an empty list of versions.
-    if !exists.0 {
-        return Ok(Vec::new());
-    }
-
-    let cr = index.crate_from_cache(package.name())?;
-
-    Ok(cr
-        .versions()
-        .iter()
-        .map(|v| v.version().to_string())
-        .collect())
 }
 
 /// Publish `package` to crates.io.
