@@ -7,10 +7,9 @@
 // except according to those terms.
 
 use release_utils::cmd::*;
-use release_utils::{GetLocalVersionError, Package};
+use release_utils::{GetLocalVersionError, Package, TempDir};
 use std::env;
 use std::process::Command;
-use tempfile::TempDir;
 
 #[test]
 fn test_package() {

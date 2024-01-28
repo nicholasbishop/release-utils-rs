@@ -7,9 +7,8 @@
 // except according to those terms.
 
 use release_utils::cmd::*;
-use release_utils::Repo;
+use release_utils::{Repo, TempDir};
 use std::process::Command;
-use tempfile::TempDir;
 
 #[test]
 fn test_repo_open() {

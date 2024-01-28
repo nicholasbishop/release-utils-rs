@@ -7,9 +7,9 @@
 // except according to those terms.
 
 use release_utils::github::{CreateRelease, Gh};
+use release_utils::TempDir;
 use std::fs;
 use std::path::PathBuf;
-use tempfile::TempDir;
 
 const WRITE_ARGS_TEMPLATE: &str = r#"#!/bin/sh
 echo "${@}" > OUT_PATH
