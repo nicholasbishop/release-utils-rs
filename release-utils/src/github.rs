@@ -68,6 +68,7 @@ impl Gh {
         match run_cmd(cmd) {
             Ok(()) => Ok(true),
             Err(err @ RunCommandError::Launch { .. }) => Err(err),
+            Err(err @ RunCommandError::NonUtf8 { .. }) => Err(err),
             Err(RunCommandError::NonZeroExit { cmd, status }) => {
                 // There are probably other ways this could fail, but
                 // checking for code 1 should be close enough.
