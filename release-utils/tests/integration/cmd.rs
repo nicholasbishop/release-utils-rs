@@ -7,6 +7,8 @@
 // except according to those terms.
 
 use release_utils::cmd::*;
+use std::ffi::OsStr;
+use std::os::unix::ffi::OsStrExt;
 use std::process::Command;
 
 #[test]
@@ -66,6 +68,17 @@ fn test_get_cmd_stdout() {
 }
 
 #[test]
+fn test_get_cmd_stdout_utf8() {
+    let mut cmd = Command::new("echo");
+    cmd.arg("hello world");
+    assert_eq!(get_cmd_stdout_utf8(cmd).unwrap(), "hello world\n");
+
+    let mut cmd = Command::new("echo");
+    cmd.arg(OsStr::from_bytes(b"\xff"));
+    assert!(get_cmd_stdout_utf8(cmd).is_err());
+}
+
+#[test]
 fn test_cmd_error_display() {
     assert_eq!(
         run_cmd(Command::new("false")).unwrap_err().to_string(),
@@ -76,4 +89,9 @@ fn test_cmd_error_display() {
         .unwrap_err()
         .to_string();
     assert!(msg.starts_with(r#"failed to launch command "does-not-exist": "#));
+
+    let mut cmd = Command::new("echo");
+    cmd.arg(OsStr::from_bytes(b"\xff"));
+    let msg = get_cmd_stdout_utf8(cmd).unwrap_err().to_string();
+    assert!(msg.starts_with(r#"command "echo \xff" output is not utf-8: "#));
 }

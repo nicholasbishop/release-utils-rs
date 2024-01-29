@@ -11,6 +11,7 @@
 use std::fmt::{self, Display, Formatter};
 use std::io;
 use std::process::{Command, ExitStatus};
+use std::string::FromUtf8Error;
 
 /// Error returned when running a child process fails.
 #[derive(Debug)]
@@ -31,6 +32,16 @@ pub enum RunCommandError {
         /// Exit status.
         status: ExitStatus,
     },
+
+    /// The command's output is not valid UTF8.
+    ///
+    /// This error is only used by [`get_cmd_stdout_utf8`].
+    NonUtf8 {
+        /// Stringified form of the command that failed.
+        cmd: String,
+        /// Underlying error.
+        err: FromUtf8Error,
+    },
 }
 
 impl Display for RunCommandError {
@@ -41,6 +52,9 @@ impl Display for RunCommandError {
             }
             Self::NonZeroExit { cmd, status } => {
                 write!(f, "command \"{cmd}\" failed with {status}")
+            }
+            Self::NonUtf8 { cmd, err } => {
+                write!(f, "command \"{cmd}\" output is not utf-8: {err}")
             }
         }
     }
@@ -93,4 +107,14 @@ pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>, RunCommandError> {
             status: output.status,
         })
     }
+}
+
+/// Log a command, run it, and get its output as a `String`.
+///
+/// Returns an error if the process fails to launch, or if the exit code
+/// is non-zero, or if the output is not utf-8.
+pub fn get_cmd_stdout_utf8(cmd: Command) -> Result<String, RunCommandError> {
+    let cmd_str = format_cmd(&cmd);
+    let stdout = get_cmd_stdout(cmd)?;
+    String::from_utf8(stdout).map_err(|err| RunCommandError::NonUtf8 { cmd: cmd_str, err })
 }
