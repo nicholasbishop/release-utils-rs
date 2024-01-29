@@ -6,10 +6,14 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use cargo_metadata::MetadataCommand;
+use crate::cmd::{
+    format_cmd, get_cmd_stdout_utf8, wait_for_child, RunCommandError,
+};
+use anyhow::Result;
 use std::env;
 use std::fmt::{self, Display, Formatter};
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 /// A package in the workspace.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -64,32 +68,67 @@ impl Package {
         format!("{}-v{}", self.name, local_version)
     }
 
-    /// Use the `cargo_metadata` crate to get the local version of a package
+    /// Use `cargo metadata` to get the local version of a package
     /// in the workspace.
     pub fn get_local_version(&self) -> Result<String, GetLocalVersionError> {
-        let mut cmd = MetadataCommand::new();
-        cmd.manifest_path(self.workspace.join("Cargo.toml"));
-        // Ignore deps, we only need local packages.
-        cmd.no_deps();
-        let local_metadata =
-            cmd.exec().map_err(GetLocalVersionError::Metadata)?;
-
-        let metadata = local_metadata
-            .packages
-            .iter()
-            .find(|pm| pm.name == self.name)
-            .ok_or_else(|| {
-                GetLocalVersionError::PackageNotFound(self.name.clone())
+        // Spawn `cargo metadata`. The output goes to a new pipe, which
+        // will be passed as the input to `jq`.
+        let mut metadata_cmd = self.get_cargo_metadata_cmd();
+        let metadata_cmd_str = format_cmd(&metadata_cmd);
+        println!("Running: {}", metadata_cmd_str);
+        let mut metadata_proc =
+            metadata_cmd.stdout(Stdio::piped()).spawn().map_err(|err| {
+                GetLocalVersionError::Process(RunCommandError::Launch {
+                    cmd: metadata_cmd_str.clone(),
+                    err,
+                })
             })?;
-        Ok(metadata.version.to_string())
+
+        // OK to unwrap, we know stdout is set.
+        let pipe = metadata_proc.stdout.take().unwrap();
+
+        let mut jq_cmd = Command::new("jq");
+        jq_cmd.arg("--raw-output");
+        jq_cmd.arg(format!(
+            ".packages[] | select(.name == \"{}\") | .version",
+            self.name
+        ));
+        jq_cmd.stdin(pipe);
+
+        let mut output = get_cmd_stdout_utf8(jq_cmd)
+            .map_err(GetLocalVersionError::Process)?;
+
+        wait_for_child(metadata_proc, metadata_cmd_str)
+            .map_err(GetLocalVersionError::Process)?;
+
+        if output.is_empty() {
+            Err(GetLocalVersionError::PackageNotFound(
+                self.name().to_string(),
+            ))
+        } else {
+            // Remove trailing newline.
+            output.pop();
+            Ok(output)
+        }
+    }
+
+    fn get_cargo_metadata_cmd(&self) -> Command {
+        let mut cmd = Command::new("cargo");
+        cmd.arg("metadata");
+        cmd.args(["--format-version", "1"]);
+        cmd.arg("--manifest-path");
+        cmd.arg(self.workspace.join("Cargo.toml"));
+        // Ignore deps, we only need local packages.
+        cmd.arg("--no-deps");
+        cmd
     }
 }
 
 /// Error returned by [`Package::get_local_version`].
 #[derive(Debug)]
 pub enum GetLocalVersionError {
-    /// Failed to get the cargo metadata.
-    Metadata(cargo_metadata::Error),
+    /// A child process failed.
+    Process(RunCommandError),
 
     /// Requested package not found in the metadata.
     PackageNotFound(String),
@@ -98,7 +137,7 @@ pub enum GetLocalVersionError {
 impl Display for GetLocalVersionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Metadata(err) => {
+            Self::Process(err) => {
                 write!(f, "failed to get cargo metadata: {err}")
             }
             Self::PackageNotFound(pkg) => {
