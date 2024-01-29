@@ -8,7 +8,7 @@
 
 //! Utilities for automatically releasing Rust code.
 
-use crate::cmd::run_cmd;
+use crate::cmd::{run_cmd, RunCommandError};
 use crate::{Package, Repo};
 use anyhow::{Context, Result};
 use crates_index::SparseIndex;
@@ -150,9 +150,8 @@ pub fn get_remote_package_versions(
 }
 
 /// Publish `package` to crates.io.
-pub fn publish_package(package: &Package) -> Result<()> {
+pub fn publish_package(package: &Package) -> Result<(), RunCommandError> {
     let mut cmd = Command::new("cargo");
     cmd.args(["publish", "--package", package.name()]);
-    run_cmd(cmd)?;
-    Ok(())
+    run_cmd(cmd)
 }
