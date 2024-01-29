@@ -90,5 +90,5 @@ pub mod cmd;
 pub mod github;
 pub mod release;
 
-pub use git::Repo;
+pub use git::{Repo, RepoOpenError};
 pub use package::Package;
