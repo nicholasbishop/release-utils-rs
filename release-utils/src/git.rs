@@ -9,11 +9,33 @@
 //! Utilities for running `git` commands.
 
 use crate::cmd::{get_cmd_stdout_utf8, run_cmd};
-use anyhow::{anyhow, Result};
-use std::env;
+use anyhow::Result;
 use std::ffi::OsStr;
+use std::fmt::{self, Display, Formatter};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::{env, io};
+
+/// Error returned by [`Repo::open`] and [`Repo::open_path`].
+#[derive(Debug)]
+pub enum RepoOpenError {
+    /// Failed to get current directory.
+    CurrentDir(io::Error),
+
+    /// The directory does not have a `.git` subdirectory.
+    GitDirMissing(PathBuf),
+}
+
+impl Display for RepoOpenError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::CurrentDir(err) => write!(f, "failed to get current dir: {err}"),
+            Self::GitDirMissing(path) => write!(f, "{} does not exist", path.display()),
+        }
+    }
+}
+
+impl std::error::Error for RepoOpenError {}
 
 /// Git repo.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -24,8 +46,8 @@ impl Repo {
     ///
     /// This will fail if the current directory does not contain a
     /// `.git` subdirectory.
-    pub fn open() -> Result<Self> {
-        let path = env::current_dir()?;
+    pub fn open() -> Result<Self, RepoOpenError> {
+        let path = env::current_dir().map_err(RepoOpenError::CurrentDir)?;
         Self::open_path(path)
     }
 
@@ -33,7 +55,7 @@ impl Repo {
     ///
     /// This will fail if the `path` does not contain a `.git`
     /// subdirectory.
-    pub fn open_path<P>(path: P) -> Result<Self>
+    pub fn open_path<P>(path: P) -> Result<Self, RepoOpenError>
     where
         P: Into<PathBuf>,
     {
@@ -49,7 +71,7 @@ impl Repo {
         // be fine.
         let git_dir = path.join(".git");
         if !git_dir.exists() {
-            return Err(anyhow!("{} does not exist", git_dir.display()));
+            return Err(RepoOpenError::GitDirMissing(git_dir));
         }
 
         Ok(Self(path))
