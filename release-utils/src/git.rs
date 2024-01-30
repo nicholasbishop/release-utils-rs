@@ -8,8 +8,8 @@
 
 //! Utilities for running `git` commands.
 
-use crate::cmd::{get_cmd_stdout, run_cmd};
-use anyhow::{anyhow, Context, Result};
+use crate::cmd::{get_cmd_stdout_utf8, run_cmd};
+use anyhow::{anyhow, Result};
 use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
@@ -82,8 +82,8 @@ impl Repo {
             "--format=format:%b",
             commit_sha,
         ]);
-        let output = get_cmd_stdout(cmd)?;
-        String::from_utf8(output).context("commit message is not utf-8")
+        let output = get_cmd_stdout_utf8(cmd)?;
+        Ok(output)
     }
 
     /// Get the subject of the commit message for the given commit.
@@ -95,8 +95,8 @@ impl Repo {
             "--format=format:%s",
             commit_sha,
         ]);
-        let output = get_cmd_stdout(cmd)?;
-        String::from_utf8(output).context("commit message is not utf-8")
+        let output = get_cmd_stdout_utf8(cmd)?;
+        Ok(output)
     }
 
     /// Fetch git tags from the remote.
@@ -112,8 +112,7 @@ impl Repo {
     /// is sufficient.
     pub fn does_git_tag_exist(&self, tag: &str) -> Result<bool> {
         let cmd = self.get_git_command(["tag", "--list", tag]);
-        let output = get_cmd_stdout(cmd)?;
-        let output = String::from_utf8(output).context("git tag is not utf-8")?;
+        let output = get_cmd_stdout_utf8(cmd)?;
 
         Ok(output.lines().any(|line| line == tag))
     }
