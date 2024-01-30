@@ -91,4 +91,4 @@ pub mod github;
 pub mod release;
 
 pub use git::{Repo, RepoOpenError};
-pub use package::Package;
+pub use package::{GetLocalVersionError, Package};

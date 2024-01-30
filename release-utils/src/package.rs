@@ -6,9 +6,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use anyhow::{Context, Result};
 use cargo_metadata::MetadataCommand;
 use std::env;
+use std::fmt::{self, Display, Formatter};
 use std::path::{Path, PathBuf};
 
 /// A package in the workspace.
@@ -66,18 +66,39 @@ impl Package {
 
     /// Use the `cargo_metadata` crate to get the local version of a package
     /// in the workspace.
-    pub fn get_local_version(&self) -> Result<String> {
+    pub fn get_local_version(&self) -> Result<String, GetLocalVersionError> {
         let mut cmd = MetadataCommand::new();
         cmd.manifest_path(self.workspace.join("Cargo.toml"));
         // Ignore deps, we only need local packages.
         cmd.no_deps();
-        let local_metadata = cmd.exec()?;
+        let local_metadata = cmd.exec().map_err(GetLocalVersionError::Metadata)?;
 
         let metadata = local_metadata
             .packages
             .iter()
             .find(|pm| pm.name == self.name)
-            .context(format!("failed to find {} in local metadata", self.name))?;
+            .ok_or_else(|| GetLocalVersionError::PackageNotFound(self.name.clone()))?;
         Ok(metadata.version.to_string())
     }
 }
+
+/// Error returned by [`Package::get_local_version`].
+#[derive(Debug)]
+pub enum GetLocalVersionError {
+    /// Failed to get the cargo metadata.
+    Metadata(cargo_metadata::Error),
+
+    /// Requested package not found in the metadata.
+    PackageNotFound(String),
+}
+
+impl Display for GetLocalVersionError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Metadata(err) => write!(f, "failed to get cargo metadata: {err}"),
+            Self::PackageNotFound(pkg) => write!(f, "package {pkg} not found in cargo metadata"),
+        }
+    }
+}
+
+impl std::error::Error for GetLocalVersionError {}
