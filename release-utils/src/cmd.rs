@@ -45,7 +45,7 @@ pub enum RunCommandError {
 }
 
 impl Display for RunCommandError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Launch { cmd, err } => {
                 write!(f, "failed to launch command \"{cmd}\": {err}")
