@@ -8,8 +8,7 @@
 
 //! Utilities for running `git` commands.
 
-use crate::cmd::{get_cmd_stdout_utf8, run_cmd};
-use anyhow::Result;
+use crate::cmd::{get_cmd_stdout_utf8, run_cmd, RunCommandError};
 use std::ffi::OsStr;
 use std::fmt::{self, Display, Formatter};
 use std::path::{Path, PathBuf};
@@ -96,7 +95,7 @@ impl Repo {
     }
 
     /// Get the subject of the commit message for the given commit.
-    pub fn get_commit_message_body(&self, commit_sha: &str) -> Result<String> {
+    pub fn get_commit_message_body(&self, commit_sha: &str) -> Result<String, RunCommandError> {
         let cmd = self.get_git_command([
             "log",
             "-1",
@@ -109,7 +108,7 @@ impl Repo {
     }
 
     /// Get the subject of the commit message for the given commit.
-    pub fn get_commit_message_subject(&self, commit_sha: &str) -> Result<String> {
+    pub fn get_commit_message_subject(&self, commit_sha: &str) -> Result<String, RunCommandError> {
         let cmd = self.get_git_command([
             "log",
             "-1",
@@ -122,7 +121,7 @@ impl Repo {
     }
 
     /// Fetch git tags from the remote.
-    pub fn fetch_git_tags(&self) -> Result<()> {
+    pub fn fetch_git_tags(&self) -> Result<(), RunCommandError> {
         let cmd = self.get_git_command(["fetch", "--tags"]);
         run_cmd(cmd)?;
         Ok(())
@@ -132,7 +131,7 @@ impl Repo {
     ///
     /// All git tags were fetched at the start of auto-release, so checking locally
     /// is sufficient.
-    pub fn does_git_tag_exist(&self, tag: &str) -> Result<bool> {
+    pub fn does_git_tag_exist(&self, tag: &str) -> Result<bool, RunCommandError> {
         let cmd = self.get_git_command(["tag", "--list", tag]);
         let output = get_cmd_stdout_utf8(cmd)?;
 
@@ -140,7 +139,11 @@ impl Repo {
     }
 
     /// Create a git tag locally and push it.
-    pub fn make_and_push_git_tag(&self, tag: &str, commit_sha: &str) -> Result<()> {
+    pub fn make_and_push_git_tag(
+        &self,
+        tag: &str,
+        commit_sha: &str,
+    ) -> Result<(), RunCommandError> {
         // Create the tag.
         let cmd = self.get_git_command(["tag", tag, commit_sha]);
         run_cmd(cmd)?;
