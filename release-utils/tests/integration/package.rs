@@ -7,7 +7,7 @@
 // except according to those terms.
 
 use release_utils::cmd::*;
-use release_utils::Package;
+use release_utils::{GetLocalVersionError, Package};
 use std::env;
 use std::process::Command;
 use tempfile::TempDir;
@@ -30,4 +30,11 @@ fn test_package_local_version() {
 
     let pkg = Package::with_workspace("foo", tmp_dir.path());
     assert_eq!(pkg.get_local_version().unwrap(), "0.1.0");
+
+    let pkg = Package::with_workspace("invalid", tmp_dir.path());
+    if let GetLocalVersionError::PackageNotFound(name) = pkg.get_local_version().unwrap_err() {
+        assert_eq!(name, "invalid");
+    } else {
+        panic!("unexpected error");
+    }
 }
