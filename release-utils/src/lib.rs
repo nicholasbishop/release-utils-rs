@@ -27,7 +27,7 @@
 //! ```
 //! use anyhow::Result;
 //! use release_utils::release::*;
-//! use release_utils::{Package, Repo};
+//! use release_utils::{get_github_sha, Package, Repo};
 //!
 //! /// Entry point for the auto-release process. This is intended to be run
 //! /// from a Github Actions workflow.
@@ -83,6 +83,7 @@
 
 #![warn(missing_docs)]
 
+mod env;
 mod git;
 mod package;
 
@@ -90,5 +91,6 @@ pub mod cmd;
 pub mod github;
 pub mod release;
 
+pub use env::{get_github_sha, VarError};
 pub use git::{Repo, RepoOpenError};
 pub use package::{GetLocalVersionError, Package};
