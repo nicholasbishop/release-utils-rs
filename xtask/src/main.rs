@@ -34,7 +34,8 @@ fn main() -> Result<()> {
 fn auto_release() -> Result<()> {
     let commit_sha = get_github_sha()?;
     let repo = Repo::open()?;
-    let commit_message_subject = repo.get_commit_message_subject(&commit_sha)?;
+    let commit_message_subject =
+        repo.get_commit_message_subject(&commit_sha)?;
 
     if !commit_message_subject.starts_with("release:") {
         println!("{commit_sha} does not contain the release trigger");

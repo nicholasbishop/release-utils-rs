@@ -28,8 +28,12 @@ pub enum RepoOpenError {
 impl Display for RepoOpenError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::CurrentDir(err) => write!(f, "failed to get current dir: {err}"),
-            Self::GitDirMissing(path) => write!(f, "{} does not exist", path.display()),
+            Self::CurrentDir(err) => {
+                write!(f, "failed to get current dir: {err}")
+            }
+            Self::GitDirMissing(path) => {
+                write!(f, "{} does not exist", path.display())
+            }
         }
     }
 }
@@ -95,7 +99,10 @@ impl Repo {
     }
 
     /// Get the subject of the commit message for the given commit.
-    pub fn get_commit_message_body(&self, commit_sha: &str) -> Result<String, RunCommandError> {
+    pub fn get_commit_message_body(
+        &self,
+        commit_sha: &str,
+    ) -> Result<String, RunCommandError> {
         let cmd = self.get_git_command([
             "log",
             "-1",
@@ -108,7 +115,10 @@ impl Repo {
     }
 
     /// Get the subject of the commit message for the given commit.
-    pub fn get_commit_message_subject(&self, commit_sha: &str) -> Result<String, RunCommandError> {
+    pub fn get_commit_message_subject(
+        &self,
+        commit_sha: &str,
+    ) -> Result<String, RunCommandError> {
         let cmd = self.get_git_command([
             "log",
             "-1",
@@ -131,7 +141,10 @@ impl Repo {
     ///
     /// All git tags were fetched at the start of auto-release, so checking locally
     /// is sufficient.
-    pub fn does_git_tag_exist(&self, tag: &str) -> Result<bool, RunCommandError> {
+    pub fn does_git_tag_exist(
+        &self,
+        tag: &str,
+    ) -> Result<bool, RunCommandError> {
         let cmd = self.get_git_command(["tag", "--list", tag]);
         let output = get_cmd_stdout_utf8(cmd)?;
 

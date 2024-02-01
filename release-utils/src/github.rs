@@ -35,7 +35,10 @@ impl Gh {
     }
 
     /// Create a new release.
-    pub fn create_release(&self, opt: CreateRelease) -> Result<(), RunCommandError> {
+    pub fn create_release(
+        &self,
+        opt: CreateRelease,
+    ) -> Result<(), RunCommandError> {
         let mut cmd = Command::new(&self.exe);
         cmd.args([
             "release",
@@ -62,7 +65,10 @@ impl Gh {
     }
 
     /// Check if a release for the given `tag` exists.
-    pub fn does_release_exist(&self, tag: &str) -> Result<bool, RunCommandError> {
+    pub fn does_release_exist(
+        &self,
+        tag: &str,
+    ) -> Result<bool, RunCommandError> {
         let mut cmd = Command::new(&self.exe);
         cmd.args(["release", "view", tag]);
         match run_cmd(cmd) {
