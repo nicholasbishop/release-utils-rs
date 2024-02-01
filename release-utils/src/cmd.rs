@@ -116,5 +116,6 @@ pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>, RunCommandError> {
 pub fn get_cmd_stdout_utf8(cmd: Command) -> Result<String, RunCommandError> {
     let cmd_str = format_cmd(&cmd);
     let stdout = get_cmd_stdout(cmd)?;
-    String::from_utf8(stdout).map_err(|err| RunCommandError::NonUtf8 { cmd: cmd_str, err })
+    String::from_utf8(stdout)
+        .map_err(|err| RunCommandError::NonUtf8 { cmd: cmd_str, err })
 }

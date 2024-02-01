@@ -32,7 +32,9 @@ fn test_package_local_version() {
     assert_eq!(pkg.get_local_version().unwrap(), "0.1.0");
 
     let pkg = Package::with_workspace("invalid", tmp_dir.path());
-    if let GetLocalVersionError::PackageNotFound(name) = pkg.get_local_version().unwrap_err() {
+    if let GetLocalVersionError::PackageNotFound(name) =
+        pkg.get_local_version().unwrap_err()
+    {
         assert_eq!(name, "invalid");
     } else {
         panic!("unexpected error");

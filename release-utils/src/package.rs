@@ -71,13 +71,16 @@ impl Package {
         cmd.manifest_path(self.workspace.join("Cargo.toml"));
         // Ignore deps, we only need local packages.
         cmd.no_deps();
-        let local_metadata = cmd.exec().map_err(GetLocalVersionError::Metadata)?;
+        let local_metadata =
+            cmd.exec().map_err(GetLocalVersionError::Metadata)?;
 
         let metadata = local_metadata
             .packages
             .iter()
             .find(|pm| pm.name == self.name)
-            .ok_or_else(|| GetLocalVersionError::PackageNotFound(self.name.clone()))?;
+            .ok_or_else(|| {
+                GetLocalVersionError::PackageNotFound(self.name.clone())
+            })?;
         Ok(metadata.version.to_string())
     }
 }
@@ -95,8 +98,12 @@ pub enum GetLocalVersionError {
 impl Display for GetLocalVersionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Metadata(err) => write!(f, "failed to get cargo metadata: {err}"),
-            Self::PackageNotFound(pkg) => write!(f, "package {pkg} not found in cargo metadata"),
+            Self::Metadata(err) => {
+                write!(f, "failed to get cargo metadata: {err}")
+            }
+            Self::PackageNotFound(pkg) => {
+                write!(f, "package {pkg} not found in cargo metadata")
+            }
         }
     }
 }

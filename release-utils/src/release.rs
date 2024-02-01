@@ -80,7 +80,10 @@ pub struct RemoteCrateExists(pub bool);
 /// Update the local crates.io cache.
 ///
 /// Based on <https://github.com/frewsxcv/rust-crates-index/blob/HEAD/examples/sparse_http_ureq.rs>
-pub fn update_index(index: &mut SparseIndex, package: &Package) -> Result<RemoteCrateExists> {
+pub fn update_index(
+    index: &mut SparseIndex,
+    package: &Package,
+) -> Result<RemoteCrateExists> {
     let crate_name = package.name();
 
     println!("fetching updates for {}", package.name());
