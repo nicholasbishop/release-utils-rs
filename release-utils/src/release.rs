@@ -9,10 +9,9 @@
 //! Utilities for automatically releasing Rust code.
 
 use crate::cmd::{run_cmd, RunCommandError};
-use crate::{Package, Repo};
-use anyhow::{Context, Result};
+use crate::{get_github_sha, Package, Repo};
+use anyhow::Result;
 use crates_index::SparseIndex;
-use std::env;
 use std::process::Command;
 
 /// Release each package in `packages`, if needed.
@@ -70,18 +69,6 @@ pub fn auto_release_package(
     }
 
     Ok(())
-}
-
-/// Get the commit to operate on from the `GITHUB_SHA` env var. When
-/// running in Github Actions, this will be set to the SHA of the commit
-/// that triggered the workflow.
-///
-/// See Github Actions' [Variables] documentation for details.
-///
-/// [Variables]: https://docs.github.com/en/actions/learn-github-actions/variables
-pub fn get_github_sha() -> Result<String> {
-    let commit_var_name = "GITHUB_SHA";
-    env::var(commit_var_name).context(format!("failed to get env var {commit_var_name}"))
 }
 
 /// Returned by [`update_index`] to indicate whether a crate exists on

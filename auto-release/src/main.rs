@@ -8,8 +8,8 @@
 
 use anyhow::Result;
 use clap::{Parser, ValueEnum};
-use release_utils::release::{get_github_sha, release_packages};
-use release_utils::{Package, Repo};
+use release_utils::release::release_packages;
+use release_utils::{get_github_sha, Package, Repo};
 use std::process;
 
 #[derive(ValueEnum, Clone, Copy)]

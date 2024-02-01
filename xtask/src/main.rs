@@ -10,7 +10,7 @@ use anyhow::Result;
 use release_utils::cmd::run_cmd;
 use release_utils::github::{self, Gh};
 use release_utils::release::*;
-use release_utils::{Package, Repo};
+use release_utils::{get_github_sha, Package, Repo};
 use std::env;
 use std::path::PathBuf;
 use std::process::Command;
