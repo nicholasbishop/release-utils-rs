@@ -6,11 +6,12 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::cmd::{get_cmd_stdout_utf8, RunCommandError};
-use crate::TempDir;
+use crate::cmd::{
+    format_cmd, get_cmd_stdout_utf8, wait_for_child, RunCommandError,
+};
 use std::fmt::{self, Display, Formatter};
-use std::path::Path;
-use std::process::Command;
+use std::io::Read;
+use std::process::{Command, Stdio};
 
 /// Error returned by [`Cargo::get_crate_versions`].
 #[derive(Debug)]
@@ -18,40 +19,36 @@ pub enum GetCrateVersionsError {
     /// The crate has not yet been published.
     NotPublished,
 
-    /// `curl` failed.
-    Curl(RunCommandError),
+    /// An internal error occurred.
+    Internal {
+        /// Description of the internal error.
+        msg: String,
 
-    /// The HTTP code is not a valid number.
-    InvalidHttpCode(String),
-
-    /// The HTTP code was neither 200 nor 404.
-    UnexpectedHttpCode(u32),
-
-    /// `jq` failed.
-    Jq(RunCommandError),
-
-    /// Failed to create a temporary directory.
-    TempDir(RunCommandError),
+        /// Optional underlying error.
+        cause: Option<Box<dyn std::error::Error + 'static>>,
+    },
 }
 
 impl Display for GetCrateVersionsError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "failed to get crate versions: ")?;
         match self {
-            Self::NotPublished => write!(f, "crate has not been published yet"),
-            Self::Curl(err) => write!(f, "curl failed: {err}"),
-            Self::InvalidHttpCode(_) => write!(f, "invalid HTTP code"),
-            Self::UnexpectedHttpCode(code) => {
-                write!(f, "unexpected HTTP code: {code}")
-            }
-            Self::Jq(err) => write!(f, "jq failed: {err}"),
-            Self::TempDir(err) => {
-                write!(f, "failed to create temporary directory: {err}")
+            Self::NotPublished => write!(f, "crate has not yet been published"),
+            Self::Internal { msg, .. } => {
+                write!(f, "{msg}")
             }
         }
     }
 }
 
-impl std::error::Error for GetCrateVersionsError {}
+impl std::error::Error for GetCrateVersionsError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::NotPublished => None,
+            Self::Internal { cause, .. } => cause.as_ref().map(|err| &**err),
+        }
+    }
+}
 
 /// Access a crate registry.
 pub struct CrateRegistry {
@@ -106,43 +103,76 @@ impl CrateRegistry {
         &self,
         crate_name: &str,
     ) -> Result<Vec<String>, GetCrateVersionsError> {
-        let tmp_dir = TempDir::new().map_err(GetCrateVersionsError::TempDir)?;
-        let output_path = tmp_dir.path().join("output.json");
-
         let mut cmd = Command::new("curl");
-        cmd.args(["--silent", "--output"]);
-        cmd.arg(&output_path);
-        cmd.args(["--write-out", "%{http_code}"]);
+        cmd.args(["--silent"]);
+        // Write the HTTP status code to stderr.
+        cmd.args(["--write-out", "%{stderr}%{http_code}"]);
         cmd.arg(self.get_crate_url(crate_name));
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+        let curl_cmd_str = format_cmd(&cmd);
+        let mut curl_proc =
+            cmd.spawn().map_err(|err| GetCrateVersionsError::Internal {
+                msg: "failed to launch curl".to_string(),
+                cause: Some(Box::new(RunCommandError::Launch {
+                    cmd: curl_cmd_str.clone(),
+                    err,
+                })),
+            })?;
 
-        let output =
-            get_cmd_stdout_utf8(cmd).map_err(GetCrateVersionsError::Curl)?;
+        // OK to unwrap, we know stderr and stdout are set.
+        let mut curl_stderr_pipe = curl_proc.stderr.take().unwrap();
+        let curl_stdout_pipe = curl_proc.stdout.take().unwrap();
 
-        let code = output
-            .trim()
-            .parse()
-            .map_err(|_| GetCrateVersionsError::InvalidHttpCode(output))?;
+        let versions_result = parse_versions_from_crate_json(curl_stdout_pipe);
+
+        wait_for_child(curl_proc, curl_cmd_str).map_err(|err| {
+            GetCrateVersionsError::Internal {
+                msg: "curl failed".to_string(),
+                cause: Some(Box::new(err)),
+            }
+        })?;
+
+        let mut stderr_bytes = Vec::new();
+        // TODO: unwraps
+        curl_stderr_pipe.read_to_end(&mut stderr_bytes).unwrap();
+
+        let stderr = String::from_utf8(stderr_bytes).unwrap();
+        dbg!(&stderr);
+
+        let code: i32 = stderr.trim().parse().map_err(|_| {
+            GetCrateVersionsError::Internal {
+                msg: format!("invalid HTTP code: {stderr:?}"),
+                cause: None,
+            }
+        })?;
         if code == 404 {
             return Err(GetCrateVersionsError::NotPublished);
         }
         if code != 200 {
-            return Err(GetCrateVersionsError::UnexpectedHttpCode(code));
+            return Err(GetCrateVersionsError::Internal {
+                msg: format!("invalid HTTP code: {code}"),
+                cause: None,
+            });
         }
 
-        parse_versions_from_crate_json(&output_path)
+        versions_result.map_err(|err| GetCrateVersionsError::Internal {
+            msg: "jq failed".to_string(),
+            cause: Some(Box::new(err)),
+        })
     }
 }
 
 fn parse_versions_from_crate_json(
-    input: &Path,
-) -> Result<Vec<String>, GetCrateVersionsError> {
+    input: impl Into<Stdio>,
+) -> Result<Vec<String>, RunCommandError> {
     let mut cmd = Command::new("jq");
     // Remove quotes.
     cmd.arg("--raw-output");
     // Select the version field.
     cmd.arg(".vers");
-    cmd.arg(input);
-    let output = get_cmd_stdout_utf8(cmd).map_err(GetCrateVersionsError::Jq)?;
+    cmd.stdin(input);
+    let output = get_cmd_stdout_utf8(cmd)?;
 
     Ok(output.lines().map(|l| l.to_string()).collect())
 }
@@ -150,7 +180,8 @@ fn parse_versions_from_crate_json(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
+    use crate::TempDir;
+    use std::fs::{self, File};
 
     #[test]
     fn test_url() {
@@ -180,7 +211,8 @@ mod tests {
 {"name":"release-utils","vers":"0.4.0","deps":[{"name":"anyhow","req":"^1.0.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"normal"},{"name":"cargo_metadata","req":"^0.18.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"normal"},{"name":"crates-index","req":"^2.3.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"normal"},{"name":"tempfile","req":"^3.0.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"dev"},{"name":"ureq","req":"^2.8.0","features":["http-interop"],"optional":false,"default_features":true,"target":null,"kind":"normal"}],"cksum":"0aa93a5aaaed004e0222a3207cf5ec5dc15a39baea0e412bebfb7aa7bb8fa14c","features":{},"yanked":false,"rust_version":"1.70"}
 {"name":"release-utils","vers":"0.4.1","deps":[{"name":"anyhow","req":"^1.0.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"normal"},{"name":"cargo_metadata","req":"^0.18.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"normal"},{"name":"crates-index","req":"^2.3.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"normal"},{"name":"tempfile","req":"^3.0.0","features":[],"optional":false,"default_features":true,"target":null,"kind":"dev"},{"name":"ureq","req":"^2.8.0","features":["http-interop"],"optional":false,"default_features":true,"target":null,"kind":"normal"}],"cksum":"02922e087d9f1da9f783ca54f4621f1a156ffc3f8563d66c2d74b5d2d6363ccf","features":{},"yanked":false,"rust_version":"1.70"}
 "#).unwrap();
-        let versions = parse_versions_from_crate_json(&path).unwrap();
+        let file = File::open(path).unwrap();
+        let versions = parse_versions_from_crate_json(file).unwrap();
         assert_eq!(versions, ["0.2.4", "0.3.0", "0.4.0", "0.4.1"]);
     }
 }

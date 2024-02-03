@@ -9,7 +9,9 @@
 //! Utilities for automatically releasing Rust code.
 
 use crate::cmd::{run_cmd, RunCommandError};
-use crate::{get_github_sha, CrateRegistry, Package, Repo};
+use crate::{
+    get_github_sha, CrateRegistry, GetCrateVersionsError, Package, Repo,
+};
 use anyhow::Result;
 use std::process::Command;
 
@@ -47,7 +49,8 @@ pub fn auto_release_package(
     println!("local version of {} is {local_version}", package.name());
 
     // Create the crates.io release if it doesn't exist.
-    if does_crates_io_release_exist(package, &local_version)? {
+    // TODO: unwrap
+    if does_crates_io_release_exist(package, &local_version).unwrap() {
         println!(
             "{}-{local_version} has already been published",
             package.name()
@@ -71,7 +74,7 @@ pub fn auto_release_package(
 pub fn does_crates_io_release_exist(
     package: &Package,
     local_version: &str,
-) -> Result<bool> {
+) -> Result<bool, GetCrateVersionsError> {
     let cargo = CrateRegistry::new();
     let remote_versions = cargo.get_crate_versions(package.name())?;
 
