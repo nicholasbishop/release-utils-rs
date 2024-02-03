@@ -8,25 +8,12 @@
 
 #![deny(unsafe_code)]
 
+mod args;
+
 use anyhow::Result;
-use clap::{Parser, ValueEnum};
+use args::{parse_args, Cli, Condition};
 use release_utils::release::release_packages;
 use release_utils::{get_github_sha, Package, Repo};
-
-#[derive(ValueEnum, Clone, Copy)]
-enum Condition {
-    Body,
-    Subject,
-}
-
-#[derive(Parser)]
-struct Cli {
-    #[arg(short, long, required = true)]
-    package: Vec<String>,
-
-    #[arg(long)]
-    condition: Option<Condition>,
-}
 
 fn check_condition(condition: Condition) -> Result<bool> {
     let commit_sha = get_github_sha()?;
@@ -69,7 +56,7 @@ fn execute(cli: Cli) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    let cli = Cli::parse();
+    let cli = parse_args();
 
     execute(cli)
 }
