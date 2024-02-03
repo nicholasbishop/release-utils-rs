@@ -9,7 +9,7 @@
 //! Utilities for automatically releasing Rust code.
 
 use crate::cmd::{run_cmd, RunCommandError};
-use crate::{get_github_sha, Package, Repo, VarError};
+use crate::{get_github_sha, GetLocalVersionError, Package, Repo, VarError};
 use anyhow::Result;
 use crates_index::SparseIndex;
 use std::fmt::{self, Display, Formatter};
@@ -32,7 +32,7 @@ pub enum ReleasePackagesError {
         /// Name of the package.
         package: String,
         /// Underlying error.
-        cause: anyhow::Error,
+        cause: ReleasePackageError,
     },
 }
 
@@ -55,8 +55,7 @@ impl std::error::Error for ReleasePackagesError {
             Self::Env(err) => Some(err),
             Self::Git(err) => Some(&**err),
             Self::CrateRegistry(err) => Some(err),
-            // TODO: remove anyhow.
-            Self::Package { .. } => None,
+            Self::Package { cause, .. } => Some(cause),
         }
     }
 }
@@ -94,6 +93,49 @@ pub fn release_packages(
     Ok(())
 }
 
+/// Error returned by [`auto_release_package`].
+#[derive(Debug)]
+pub enum ReleasePackageError {
+    /// Failed to get the local version.
+    LocalVersion(GetLocalVersionError),
+
+    /// Failed to get the published versions of the crate.
+    RemoteVersions(anyhow::Error),
+
+    /// Failed to publish the crate.
+    Publish(RunCommandError),
+
+    /// Failed to create or push the git tag.
+    Git(RunCommandError),
+}
+
+impl Display for ReleasePackageError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::LocalVersion(_) => {
+                write!(f, "failed to get local package version")
+            }
+            Self::RemoteVersions(_) => {
+                write!(f, "failed to get the published package versions")
+            }
+            Self::Publish(_) => write!(f, "failed to publish the crate"),
+            Self::Git(_) => write!(f, "git error"),
+        }
+    }
+}
+
+impl std::error::Error for ReleasePackageError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::LocalVersion(err) => Some(err),
+            // TODO: remove anyhow.
+            Self::RemoteVersions(_) => None,
+            Self::Publish(err) => Some(err),
+            Self::Git(err) => Some(err),
+        }
+    }
+}
+
 /// Release a single package, if needed.
 ///
 /// This publishes to crates.io if the corresponding version does not already
@@ -103,26 +145,34 @@ pub fn auto_release_package(
     package: &Package,
     index: &mut SparseIndex,
     commit_sha: &str,
-) -> Result<()> {
-    let local_version = package.get_local_version()?;
+) -> Result<(), ReleasePackageError> {
+    let local_version = package
+        .get_local_version()
+        .map_err(ReleasePackageError::LocalVersion)?;
     println!("local version of {} is {local_version}", package.name());
 
     // Create the crates.io release if it doesn't exist.
-    if does_crates_io_release_exist(package, &local_version, index)? {
+    if does_crates_io_release_exist(package, &local_version, index)
+        .map_err(ReleasePackageError::RemoteVersions)?
+    {
         println!(
             "{}-{local_version} has already been published",
             package.name()
         );
     } else {
-        publish_package(package)?;
+        publish_package(package).map_err(ReleasePackageError::Publish)?;
     }
 
     // Create the remote git tag if it doesn't exist.
     let tag = package.get_git_tag_name(&local_version);
-    if repo.does_git_tag_exist(&tag)? {
+    if repo
+        .does_git_tag_exist(&tag)
+        .map_err(ReleasePackageError::Git)?
+    {
         println!("git tag {tag} already exists");
     } else {
-        repo.make_and_push_git_tag(&tag, commit_sha)?;
+        repo.make_and_push_git_tag(&tag, commit_sha)
+            .map_err(ReleasePackageError::Git)?;
     }
 
     Ok(())
