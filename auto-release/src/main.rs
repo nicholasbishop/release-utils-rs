@@ -10,7 +10,6 @@ use anyhow::Result;
 use clap::{Parser, ValueEnum};
 use release_utils::release::release_packages;
 use release_utils::{get_github_sha, Package, Repo};
-use std::process;
 
 #[derive(ValueEnum, Clone, Copy)]
 enum Condition {
@@ -25,9 +24,6 @@ struct Cli {
 
     #[arg(long)]
     condition: Option<Condition>,
-
-    #[arg(long)]
-    execute: bool,
 }
 
 fn check_condition(condition: Condition) -> Result<bool> {
@@ -73,10 +69,5 @@ fn execute(cli: Cli) -> Result<()> {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    if cli.execute {
-        execute(cli)
-    } else {
-        println!("--execute not passed; stopping");
-        process::exit(1);
-    }
+    execute(cli)
 }
