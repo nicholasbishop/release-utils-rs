@@ -27,6 +27,7 @@ pub enum RepoOpenError {
 
 impl Display for RepoOpenError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "failed to open git repo: ")?;
         match self {
             Self::CurrentDir(err) => {
                 write!(f, "failed to get current dir: {err}")
