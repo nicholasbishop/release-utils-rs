@@ -52,7 +52,7 @@ fn execute(cli: Cli) -> Result<()> {
 
     let packages: Vec<_> = cli.package.iter().map(Package::new).collect();
 
-    release_packages(&packages)
+    Ok(release_packages(&packages)?)
 }
 
 fn main() -> Result<()> {

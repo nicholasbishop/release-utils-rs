@@ -9,10 +9,57 @@
 //! Utilities for automatically releasing Rust code.
 
 use crate::cmd::{run_cmd, RunCommandError};
-use crate::{get_github_sha, Package, Repo};
+use crate::{get_github_sha, Package, Repo, VarError};
 use anyhow::Result;
 use crates_index::SparseIndex;
+use std::fmt::{self, Display, Formatter};
 use std::process::Command;
+
+/// Error returned by [`release_packages`].
+#[derive(Debug)]
+pub enum ReleasePackagesError {
+    /// Environment error.
+    Env(VarError),
+
+    /// A git error occurred.
+    Git(Box<dyn std::error::Error + Send + Sync + 'static>),
+
+    /// A crate registry error occurred.
+    CrateRegistry(crates_index::Error),
+
+    /// Failed to release a package.
+    Package {
+        /// Name of the package.
+        package: String,
+        /// Underlying error.
+        cause: anyhow::Error,
+    },
+}
+
+impl Display for ReleasePackagesError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Env(_) => write!(f, "environment error"),
+            Self::Git(_) => write!(f, "git error"),
+            Self::CrateRegistry(_) => write!(f, "crate registry error"),
+            Self::Package { package, .. } => {
+                write!(f, "failed to release package {package}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ReleasePackagesError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Env(err) => Some(err),
+            Self::Git(err) => Some(&**err),
+            Self::CrateRegistry(err) => Some(err),
+            // TODO: remove anyhow.
+            Self::Package { .. } => None,
+        }
+    }
+}
 
 /// Release each package in `packages`, if needed.
 ///
@@ -22,16 +69,26 @@ use std::process::Command;
 ///
 /// Note that when releasing to crates.io, the order of `packages` may
 /// be significant if the packages depend on one another.
-pub fn release_packages(packages: &[Package]) -> Result<()> {
-    let commit_sha = get_github_sha()?;
+pub fn release_packages(
+    packages: &[Package],
+) -> Result<(), ReleasePackagesError> {
+    let commit_sha = get_github_sha().map_err(ReleasePackagesError::Env)?;
 
-    let repo = Repo::open()?;
-    repo.fetch_git_tags()?;
+    let repo =
+        Repo::open().map_err(|err| ReleasePackagesError::Git(Box::new(err)))?;
+    repo.fetch_git_tags()
+        .map_err(|err| ReleasePackagesError::Git(Box::new(err)))?;
 
-    let mut index = SparseIndex::new_cargo_default()?;
+    let mut index = SparseIndex::new_cargo_default()
+        .map_err(ReleasePackagesError::CrateRegistry)?;
 
     for package in packages {
-        auto_release_package(&repo, package, &mut index, &commit_sha)?;
+        auto_release_package(&repo, package, &mut index, &commit_sha).map_err(
+            |err| ReleasePackagesError::Package {
+                package: package.name().to_string(),
+                cause: err,
+            },
+        )?;
     }
 
     Ok(())
