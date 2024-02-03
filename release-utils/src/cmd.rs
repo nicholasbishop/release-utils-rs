@@ -10,7 +10,7 @@
 
 use std::fmt::{self, Display, Formatter};
 use std::io;
-use std::process::{Command, ExitStatus};
+use std::process::{Child, Command, ExitStatus};
 use std::string::FromUtf8Error;
 
 /// Error returned when running a child process fails.
@@ -18,6 +18,14 @@ use std::string::FromUtf8Error;
 pub enum RunCommandError {
     /// Failed to launch command. May indicate the program is not installed.
     Launch {
+        /// Stringified form of the command that failed.
+        cmd: String,
+        /// Underlying error.
+        err: io::Error,
+    },
+
+    /// Failed to wait for command to exit.
+    Wait {
         /// Stringified form of the command that failed.
         cmd: String,
         /// Underlying error.
@@ -50,6 +58,9 @@ impl Display for RunCommandError {
             Self::Launch { cmd, .. } => {
                 write!(f, "failed to launch command \"{cmd}\"")
             }
+            Self::Wait { cmd, .. } => {
+                write!(f, "failed to wait for command \"{cmd}\" to exit")
+            }
             Self::NonZeroExit { cmd, status } => {
                 write!(f, "command \"{cmd}\" failed with {status}")
             }
@@ -64,6 +75,7 @@ impl std::error::Error for RunCommandError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Launch { err, .. } => Some(err),
+            Self::Wait { err, .. } => Some(err),
             Self::NonZeroExit { .. } => None,
             Self::NonUtf8 { err, .. } => Some(err),
         }
@@ -126,4 +138,25 @@ pub fn get_cmd_stdout_utf8(cmd: Command) -> Result<String, RunCommandError> {
     let stdout = get_cmd_stdout(cmd)?;
     String::from_utf8(stdout)
         .map_err(|err| RunCommandError::NonUtf8 { cmd: cmd_str, err })
+}
+
+/// Wait for a child process to exit.
+///
+/// Returns an error if waiting fails, or if the exit code is non-zero.
+pub fn wait_for_child(
+    mut child: Child,
+    cmd_str: String,
+) -> Result<(), RunCommandError> {
+    let status = child.wait().map_err(|err| RunCommandError::Wait {
+        cmd: cmd_str.clone(),
+        err,
+    })?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(RunCommandError::NonZeroExit {
+            cmd: cmd_str,
+            status,
+        })
+    }
 }
