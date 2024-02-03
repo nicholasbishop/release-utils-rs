@@ -42,7 +42,10 @@
 //!         return Ok(());
 //!     }
 //!
-//!     release_packages(&[Package::new("foo"), Package::new("bar")])
+//!     Ok(release_packages(&[
+//!         Package::new("foo"),
+//!         Package::new("bar"),
+//!     ])?)
 //! }
 //! ```
 //!
