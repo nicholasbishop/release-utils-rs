@@ -47,20 +47,28 @@ pub enum RunCommandError {
 impl Display for RunCommandError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Launch { cmd, err } => {
-                write!(f, "failed to launch command \"{cmd}\": {err}")
+            Self::Launch { cmd, .. } => {
+                write!(f, "failed to launch command \"{cmd}\"")
             }
             Self::NonZeroExit { cmd, status } => {
                 write!(f, "command \"{cmd}\" failed with {status}")
             }
-            Self::NonUtf8 { cmd, err } => {
-                write!(f, "command \"{cmd}\" output is not utf-8: {err}")
+            Self::NonUtf8 { cmd, .. } => {
+                write!(f, "command \"{cmd}\" output is not utf-8")
             }
         }
     }
 }
 
-impl std::error::Error for RunCommandError {}
+impl std::error::Error for RunCommandError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Launch { err, .. } => Some(err),
+            Self::NonZeroExit { .. } => None,
+            Self::NonUtf8 { err, .. } => Some(err),
+        }
+    }
+}
 
 /// Format a command in a way suitable for logging.
 pub fn format_cmd(cmd: &Command) -> String {

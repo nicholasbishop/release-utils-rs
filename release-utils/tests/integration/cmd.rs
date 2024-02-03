@@ -88,10 +88,10 @@ fn test_cmd_error_display() {
     let msg = run_cmd(Command::new("does-not-exist"))
         .unwrap_err()
         .to_string();
-    assert!(msg.starts_with(r#"failed to launch command "does-not-exist": "#));
+    assert_eq!(msg, r#"failed to launch command "does-not-exist""#);
 
     let mut cmd = Command::new("echo");
     cmd.arg(OsStr::from_bytes(b"\xff"));
     let msg = get_cmd_stdout_utf8(cmd).unwrap_err().to_string();
-    assert!(msg.starts_with(r#"command "echo \xff" output is not utf-8: "#));
+    assert_eq!(msg, r#"command "echo \xff" output is not utf-8"#);
 }
