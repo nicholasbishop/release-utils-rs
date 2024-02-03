@@ -82,6 +82,7 @@
 //!
 //! [Account Settings]: https://crates.io/settings/tokens
 
+#![deny(unsafe_code)]
 #![warn(missing_docs)]
 
 mod env;

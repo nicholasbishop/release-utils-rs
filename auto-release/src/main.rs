@@ -6,6 +6,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![deny(unsafe_code)]
+
 use anyhow::Result;
 use clap::{Parser, ValueEnum};
 use release_utils::release::release_packages;
