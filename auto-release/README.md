@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cargo install auto-release
-      - run: auto-release -p <package> --execute
+      - run: auto-release -p <package>
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 ```
@@ -62,8 +62,6 @@ To make the token available to the Github Actions workflow:
   start with "release:", otherwise the commit will be ignored.
 * `--condition=subject` adds a condition that the commit message subject
   must start with "release:", otherwise the commit will be ignored.
-* `--execute` is required; this is just to prevent the command from
-  doing anything if you run it locally by accident.
 
 [Account Settings]: https://crates.io/settings/tokens
 
