@@ -9,7 +9,6 @@
 use crate::cmd::{
     format_cmd, get_cmd_stdout_utf8, wait_for_child, RunCommandError,
 };
-use anyhow::Result;
 use std::env;
 use std::fmt::{self, Display, Formatter};
 use std::path::{Path, PathBuf};

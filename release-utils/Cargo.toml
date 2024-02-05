@@ -18,8 +18,5 @@ license.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 
-[dependencies]
-anyhow = "1.0.0"
-
 [dev-dependencies]
 tempfile = "3.0.0"
