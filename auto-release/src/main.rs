@@ -10,12 +10,14 @@
 
 mod args;
 
-use anyhow::Result;
 use args::{parse_args, Cli, Condition};
 use release_utils::release::release_packages;
 use release_utils::{get_github_sha, Package, Repo};
+use std::process;
 
-fn check_condition(condition: Condition) -> Result<bool> {
+type Error = Box<dyn std::error::Error>;
+
+fn check_condition(condition: Condition) -> Result<bool, Error> {
     let commit_sha = get_github_sha()?;
     let repo = Repo::open()?;
 
@@ -43,7 +45,7 @@ fn check_condition(condition: Condition) -> Result<bool> {
     }
 }
 
-fn execute(cli: Cli) -> Result<()> {
+fn execute(cli: Cli) -> Result<(), Error> {
     if let Some(condition) = cli.condition {
         if !check_condition(condition)? {
             return Ok(());
@@ -55,8 +57,18 @@ fn execute(cli: Cli) -> Result<()> {
     Ok(release_packages(&packages)?)
 }
 
-fn main() -> Result<()> {
+fn main() {
     let cli = parse_args();
 
-    execute(cli)
+    if let Err(err) = execute(cli) {
+        println!("{err}");
+        println!("Caused by:");
+        let mut err = &*err;
+        while let Some(cause) = err.source() {
+            println!("    {cause}");
+            err = cause;
+        }
+
+        process::exit(1);
+    }
 }
