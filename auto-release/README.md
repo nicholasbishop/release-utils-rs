@@ -42,6 +42,16 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 ```
 
+The `auto-release` crate has minimal compile-time dependencies, so it
+compiles very quickly. It does rely on various programs being available,
+all of which are already installed and configured on Github's Ubuntu
+runners:
+* `cargo`
+* `curl`
+* `gh`
+* `git`
+* `jq`
+
 ### Cargo registry token
 
 Generate the cargo registry token in your crates.io [Account
