@@ -75,7 +75,6 @@ dependencies = [
 name = "release-utils"
 version = "0.4.1"
 dependencies = [
- "anyhow",
  "tempfile",
 ]
 

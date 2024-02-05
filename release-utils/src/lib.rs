@@ -25,13 +25,13 @@
 //! # Example code for a release job
 //!
 //! ```
-//! use anyhow::Result;
 //! use release_utils::release::*;
 //! use release_utils::{get_github_sha, Package, Repo};
+//! use std::error::Error;
 //!
 //! /// Entry point for the auto-release process. This is intended to be run
 //! /// from a Github Actions workflow.
-//! fn auto_release() -> Result<()> {
+//! fn auto_release() -> Result<(), Box<dyn Error>> {
 //!     let commit_sha = get_github_sha()?;
 //!     let repo = Repo::open()?;
 //!     let commit_message_subject =

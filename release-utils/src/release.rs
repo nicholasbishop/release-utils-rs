@@ -13,7 +13,6 @@ use crate::{
     get_github_sha, CrateRegistry, GetCrateVersionsError, GetLocalVersionError,
     Package, Repo, VarError,
 };
-use anyhow::Result;
 use std::fmt::{self, Display, Formatter};
 use std::process::Command;
 
