@@ -68,9 +68,9 @@ To make the token available to the Github Actions workflow:
 * `-p`/`--package` can be specified multiple times to release multiple
   packages. Note that order may be significant if packages depend on
   each other.
-* `--condition=body` adds a condition that the commit message body must
+* `--condition body` adds a condition that the commit message body must
   start with "release:", otherwise the commit will be ignored.
-* `--condition=subject` adds a condition that the commit message subject
+* `--condition subject` adds a condition that the commit message subject
   must start with "release:", otherwise the commit will be ignored.
 
 [Account Settings]: https://crates.io/settings/tokens
