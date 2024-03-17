@@ -57,6 +57,8 @@
 //!     branches:
 //!       - main
 //!
+//! name: Release
+//!
 //! permissions:
 //!   contents: write
 //!
@@ -65,7 +67,6 @@
 //!     runs-on: ubuntu-latest
 //!     steps:
 //!       - uses: actions/checkout@v4
-//!       - uses: Swatinem/rust-cache@v2
 //!       - run: cargo xtask release
 //!         env:
 //!           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

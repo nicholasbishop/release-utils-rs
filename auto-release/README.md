@@ -27,6 +27,8 @@ on:
   push:
     branches:
       - main
+      
+name: Release
 
 permissions:
   contents: write
