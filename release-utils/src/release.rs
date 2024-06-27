@@ -175,7 +175,11 @@ pub fn does_crates_io_release_exist(
     local_version: &str,
 ) -> Result<bool, GetCrateVersionsError> {
     let cargo = CrateRegistry::new();
-    let remote_versions = cargo.get_crate_versions(package.name())?;
+    let remote_versions = match cargo.get_crate_versions(package.name()) {
+        Ok(v) => v,
+        Err(GetCrateVersionsError::NotPublished) => Vec::new(),
+        Err(err) => return Err(err),
+    };
 
     if remote_versions.contains(&local_version.to_string()) {
         return Ok(true);
