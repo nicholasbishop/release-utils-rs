@@ -10,9 +10,9 @@
 
 mod args;
 
-use args::{parse_args, Cli, Condition};
+use args::{Cli, Condition, parse_args};
 use release_utils::release::release_packages;
-use release_utils::{get_github_sha, Package, Repo};
+use release_utils::{Package, Repo, get_github_sha};
 use std::process;
 
 type Error = Box<dyn std::error::Error>;
@@ -40,7 +40,9 @@ fn check_condition(condition: Condition) -> Result<bool, Error> {
     if msg_text.starts_with(prefix) {
         Ok(true)
     } else {
-        println!("commit message {msg_kind} of {commit_sha} does not start with \"{prefix}\"");
+        println!(
+            "commit message {msg_kind} of {commit_sha} does not start with \"{prefix}\""
+        );
         Ok(false)
     }
 }

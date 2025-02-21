@@ -8,10 +8,10 @@
 
 //! Utilities for automatically releasing Rust code.
 
-use crate::cmd::{run_cmd, RunCommandError};
+use crate::cmd::{RunCommandError, run_cmd};
 use crate::{
-    get_github_sha, CrateRegistry, GetCrateVersionsError, GetLocalVersionError,
-    Package, Repo, VarError,
+    CrateRegistry, GetCrateVersionsError, GetLocalVersionError, Package, Repo,
+    VarError, get_github_sha,
 };
 use std::fmt::{self, Display, Formatter};
 use std::process::Command;

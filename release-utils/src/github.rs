@@ -8,7 +8,7 @@
 
 //! Tools for working with the Github API.
 
-use crate::cmd::{run_cmd, RunCommandError};
+use crate::cmd::{RunCommandError, run_cmd};
 use std::path::PathBuf;
 use std::process::Command;
 

@@ -8,7 +8,7 @@
 
 //! Utilities for running `git` commands.
 
-use crate::cmd::{get_cmd_stdout_utf8, run_cmd, RunCommandError};
+use crate::cmd::{RunCommandError, get_cmd_stdout_utf8, run_cmd};
 use std::ffi::OsStr;
 use std::fmt::{self, Display, Formatter};
 use std::path::{Path, PathBuf};
