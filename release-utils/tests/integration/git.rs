@@ -6,8 +6,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use release_utils::cmd::*;
 use release_utils::Repo;
+use release_utils::cmd::*;
 use std::process::Command;
 use tempfile::TempDir;
 

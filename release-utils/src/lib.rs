@@ -26,7 +26,7 @@
 //!
 //! ```
 //! use release_utils::release::*;
-//! use release_utils::{get_github_sha, Package, Repo};
+//! use release_utils::{Package, Repo, get_github_sha};
 //! use std::error::Error;
 //!
 //! /// Entry point for the auto-release process. This is intended to be run
@@ -99,6 +99,6 @@ pub mod github;
 pub mod release;
 
 pub use crate_registry::{CrateRegistry, GetCrateVersionsError};
-pub use env::{get_github_sha, VarError};
+pub use env::{VarError, get_github_sha};
 pub use git::{Repo, RepoOpenError};
 pub use package::{GetLocalVersionError, Package};

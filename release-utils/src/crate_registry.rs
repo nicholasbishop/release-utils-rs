@@ -7,7 +7,7 @@
 // except according to those terms.
 
 use crate::cmd::{
-    format_cmd, get_cmd_stdout_utf8, wait_for_child, RunCommandError,
+    RunCommandError, format_cmd, get_cmd_stdout_utf8, wait_for_child,
 };
 use std::fmt::{self, Display, Formatter};
 use std::io::Read;
