@@ -74,7 +74,7 @@ impl Package {
         // will be passed as the input to `jq`.
         let mut metadata_cmd = self.get_cargo_metadata_cmd();
         let metadata_cmd_str = format_cmd(&metadata_cmd);
-        println!("Running: {}", metadata_cmd_str);
+        println!("Running: {metadata_cmd_str}");
         let mut metadata_proc =
             metadata_cmd.stdout(Stdio::piped()).spawn().map_err(|err| {
                 GetLocalVersionError::Process(RunCommandError::Launch {
