@@ -93,7 +93,7 @@ pub fn format_cmd(cmd: &Command) -> String {
 /// is non-zero.
 pub fn run_cmd(mut cmd: Command) -> Result<(), RunCommandError> {
     let cmd_str = format_cmd(&cmd);
-    println!("Running: {}", cmd_str);
+    println!("Running: {cmd_str}");
     let status = cmd.status().map_err(|err| RunCommandError::Launch {
         cmd: cmd_str.clone(),
         err,
@@ -114,7 +114,7 @@ pub fn run_cmd(mut cmd: Command) -> Result<(), RunCommandError> {
 /// is non-zero.
 pub fn get_cmd_stdout(mut cmd: Command) -> Result<Vec<u8>, RunCommandError> {
     let cmd_str = format_cmd(&cmd);
-    println!("Running: {}", cmd_str);
+    println!("Running: {cmd_str}");
     let output = cmd.output().map_err(|err| RunCommandError::Launch {
         cmd: cmd_str.clone(),
         err,
