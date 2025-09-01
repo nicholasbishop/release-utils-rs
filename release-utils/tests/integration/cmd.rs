@@ -93,5 +93,9 @@ fn test_cmd_error_display() {
     let mut cmd = Command::new("echo");
     cmd.arg(OsStr::from_bytes(b"\xff"));
     let msg = get_cmd_stdout_utf8(cmd).unwrap_err().to_string();
+    // In older versions of Rust the "ff" is lowercase, in newer
+    // versions it's uppercase. To make tests work either way, force it
+    // to lowercase.
+    let msg = msg.to_lowercase();
     assert_eq!(msg, r#"command "echo \xff" output is not utf-8"#);
 }
