@@ -8,11 +8,11 @@
 
 [workspace]
 members = ["auto-release", "release-utils"]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
 version = "0.5.1"
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
-rust-version = "1.70"
+rust-version = "1.85"
 repository = "https://github.com/nicholasbishop/release-utils-rs"
