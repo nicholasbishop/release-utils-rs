@@ -23,19 +23,12 @@ fn check_condition(condition: Condition) -> Result<bool, Error> {
 
     let prefix = "release:";
 
-    let msg_text;
-    let msg_kind;
-
-    match condition {
-        Condition::Body => {
-            msg_text = repo.get_commit_message_body(&commit_sha)?;
-            msg_kind = "body";
-        }
+    let (msg_text, msg_kind) = match condition {
+        Condition::Body => (repo.get_commit_message_body(&commit_sha)?, "body"),
         Condition::Subject => {
-            msg_text = repo.get_commit_message_subject(&commit_sha)?;
-            msg_kind = "subject";
+            (repo.get_commit_message_subject(&commit_sha)?, "subject")
         }
-    }
+    };
 
     if msg_text.starts_with(prefix) {
         Ok(true)
